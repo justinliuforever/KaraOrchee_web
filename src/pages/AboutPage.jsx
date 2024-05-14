@@ -1,8 +1,5 @@
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 
-import {
-  ChevronRightIcon,
-} from '@heroicons/react/20/solid'
 import { Dialog } from '@headlessui/react'
 import Features from '../components/Features'
 import Newsletter from '../components/Newsletter'
@@ -106,7 +103,7 @@ const footerNavigation = {
   ],
 }
 
-export default function Example() {
+export default function AboutPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   return (
@@ -225,22 +222,16 @@ export default function Example() {
           <div className="mx-auto max-w-7xl px-6 py-24 sm:py-32 lg:flex lg:items-center lg:gap-x-10 lg:px-8 lg:py-40">
             <div className="mx-auto max-w-2xl lg:mx-0 lg:flex-auto">
               <div className="flex">
-                <div className="relative flex items-center gap-x-4 rounded-full px-4 py-1 text-sm leading-6 text-gray-600 ring-1 ring-gray-900/10 hover:ring-gray-900/20">
-                  <span className="font-semibold text-indigo-600">We’re hiring</span>
-                  <span className="h-4 w-px bg-gray-900/10" aria-hidden="true" />
-                  <a href="#" className="flex items-center gap-x-1">
-                    <span className="absolute inset-0" aria-hidden="true" />
-                    See open positions
-                    <ChevronRightIcon className="-mr-2 h-5 w-5 text-gray-400" aria-hidden="true" />
-                  </a>
-                </div>
               </div>
               <h1 className="mt-10 max-w-lg text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
                 A better way to ship your projects
               </h1>
               <p className="mt-6 text-lg leading-8 text-gray-600">
-                Esse id magna consectetur fugiat non dolor in ad laboris magna laborum ea consequat. Nisi irure aliquip
-                nisi adipisicing veniam voluptate id. In veniam incididunt ex veniam adipisicing sit.
+                KaraOrchee transforms classical music practice by bringing the orchestra to your fingertips. Our innovative platform invites musicians into a global community to connect, 
+                collaborate, and create, anytime and anywhere. We are not just an app we are revolutionizing the way the world plays and experiences classical music.
+              </p>
+              <p className="mt-6 text-lg leading-8 text-gray-600">
+                We are not just an app we are revolutionizing the way the world plays and experiences classical music.
               </p>
               <div className="mt-10 flex items-center gap-x-6">
                 <a
