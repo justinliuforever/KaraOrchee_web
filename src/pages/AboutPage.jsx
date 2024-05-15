@@ -1,10 +1,16 @@
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
+import { useEffect, useRef } from 'react';
 
 import { Dialog } from '@headlessui/react'
 import Features from '../components/Features'
 import Newsletter from '../components/Newsletter'
 import Testimonials from '../components/Testimonials'
+import { TextPlugin } from 'gsap/TextPlugin';
+import { gsap } from 'gsap';
 import { useState } from 'react'
+
+// Register the TextPlugin
+gsap.registerPlugin(TextPlugin);
 
 const navigation = [
   { name: 'Product', href: '#' },
@@ -105,6 +111,21 @@ const footerNavigation = {
 
 export default function AboutPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  const textRef = useRef(null);
+  useEffect(() => {
+    // Wait for 2 seconds before starting the animation
+    const timer = setTimeout(() => {
+      gsap.to(textRef.current, {
+        duration: 4,
+        text: "Your Orchestra, Anywhere, Anytime",
+        ease: "none"
+      });
+    }, 2000);
+
+    // Clean up the timer if the component is unmounted
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div className="bg-white">
@@ -223,8 +244,8 @@ export default function AboutPage() {
             <div className="mx-auto max-w-2xl lg:mx-0 lg:flex-auto">
               <div className="flex">
               </div>
-              <h1 className="mt-10 max-w-lg text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
-                A better way to ship your projects
+              <h1 ref={textRef} className="mt-10 max-w-lg text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
+                KaraOrchee
               </h1>
               <p className="mt-6 text-lg leading-8 text-gray-600">
                 KaraOrchee transforms classical music practice by bringing the orchestra to your fingertips. Our innovative platform invites musicians into a global community to connect, 
