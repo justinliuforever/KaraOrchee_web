@@ -1,15 +1,20 @@
 import {
+  AcademicCapIcon,
   ArrowPathIcon,
+  BookOpenIcon,
   CloudArrowUpIcon,
+  ComputerDesktopIcon,
+  CpuChipIcon,
   LockClosedIcon,
-  ServerIcon,
+  PencilSquareIcon,
+  ServerIcon
 } from '@heroicons/react/20/solid'
 
 const primaryFeatures = [
   {
     name: 'Push to deploy.',
     description: 'Lorem ipsum, dolor sit amet consectetur adipisicing elit aute id magna.',
-    icon: CloudArrowUpIcon,
+    icon: PencilSquareIcon,
   },
   {
     name: 'SSL certificates.',
@@ -25,25 +30,39 @@ const primaryFeatures = [
 
 const secondaryFeatures = [
   {
-    name: 'Pain Point 1',
+    name: 'Tiered Individual Subscription',
     description:
-      'Commodo nec sagittis tortor mauris sed. Turpis tortor quis scelerisque diam id accumsan nullam tempus. Pulvinar etiam lacus volutpat eu. Phasellus praesent ligula sit faucibus.',
+      'Monthly subscription providing individual users with access to digital orchestral accompaniments and classical music community features.',
     href: '#',
-    icon: CloudArrowUpIcon,
+    icon: PencilSquareIcon,
   },
   {
-    name: 'Pain Pqoint 2',
+    name: 'Educational/Organizational Subscription',
     description:
-      'Pellentesque enim a commodo malesuada turpis eleifend risus. Facilisis donec placerat sapien consequat tempor fermentum nibh.',
+      'Annual subscription offering unlimited downloads and access for a designated number of devices. Tailored for music schools, universities, and conservatories.',
     href: '#',
-    icon: LockClosedIcon,
+    icon: AcademicCapIcon,
   },
   {
-    name: 'Pain Point 3',
+    name: 'A La Carte',
     description:
-      'Pellentesque sit elit congue ante nec amet. Dolor aenean curabitur viverra suspendisse iaculis eget. Nec mollis placerat ultricies euismod ut condimentum.',
+      'Individual pieces of recordings available for purchase, catering to users who prefer not to commit to a monthly subscription.',
     href: '#',
-    icon: ArrowPathIcon,
+    icon: BookOpenIcon,
+  },
+  {
+    name: 'Platform (Ads and Transation)',
+    description:
+      'A versatile platform tailored for diverse business entities, equipping them with more revenue generating tools and focused classical-music customer base, enabling them to prosper.',
+    href: '#',
+    icon: ComputerDesktopIcon,
+  },
+  {
+    name: 'VR Integration (Future)',
+    description:
+      'Additional premium feature planned for future release, offering users a Virtual reality experience of playing within an orchestra, e.9., seeing an actual orchestra playing with oneself at home with VisionPro.',
+    href: '#',
+    icon: CpuChipIcon,
   },
 ]
 
@@ -106,11 +125,10 @@ export default function Features() {
         <div className="mx-auto max-w-2xl lg:text-center">
           <h2 className="text-base font-semibold leading-7 text-indigo-600">Classic Music</h2>
           <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-            Everything you need to begin your music journey.
+            What We Sell
           </p>
           <p className="mt-6 text-lg leading-8 text-gray-600">
-            Quis tellus eget adipiscing convallis sit sit eget aliquet quis. Suspendisse eget egestas a elementum
-            pulvinar et feugiat blandit at. In mi viverra elit nunc.
+            The platform offers a range of subscription options to cater to individual and organizational needs
           </p>
         </div>
         <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-none">
@@ -124,9 +142,9 @@ export default function Features() {
                 <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-gray-600">
                   <p className="flex-auto">{feature.description}</p>
                   <p className="mt-6">
-                    <a href={feature.href} className="text-sm font-semibold leading-6 text-indigo-600">
+                    {/* <a href={feature.href} className="text-sm font-semibold leading-6 text-indigo-600">
                       Learn more <span aria-hidden="true">→</span>
-                    </a>
+                    </a> */}
                   </p>
                 </dd>
               </div>
