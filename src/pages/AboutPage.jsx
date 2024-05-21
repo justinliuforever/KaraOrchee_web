@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { Dialog } from '@headlessui/react'
 import Features from '../components/Features'
 import Newsletter from '../components/Newsletter'
+import Statistics from '../components/Statistics';
 import Testimonials from '../components/Testimonials'
 import { TextPlugin } from 'gsap/TextPlugin';
 import { gsap } from 'gsap';
@@ -249,7 +250,7 @@ export default function AboutPage() {
               </h1>
               <p className="mt-6 text-lg leading-8 text-gray-600">
                 KaraOrchee transforms classical music practice by bringing the orchestra to your fingertips. Our innovative platform invites musicians into a global community to connect, 
-                collaborate, and create, anytime and anywhere. We are not just an app we are revolutionizing the way the world plays and experiences classical music.
+                collaborate, and create, anytime and anywhere.
               </p>
               <p className="mt-6 text-lg leading-8 text-gray-600">
                 We are not just an app we are revolutionizing the way the world plays and experiences classical music.
@@ -339,11 +340,14 @@ export default function AboutPage() {
         {/* Feature section */}
         <Features/>
 
+        {/* Statistics section */}
+        <Statistics/>
+
         {/* Newsletter section */}
         <Newsletter/>
 
         {/* Testimonials section */}
-        <Testimonials/>      
+        {/* <Testimonials/>       */}
 
         
       </main>
