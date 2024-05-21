@@ -3,7 +3,9 @@ import { useEffect, useRef } from 'react';
 
 import { Dialog } from '@headlessui/react'
 import Features from '../components/Features'
+import LogoList from '../components/LogoList'
 import Newsletter from '../components/Newsletter'
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Statistics from '../components/Statistics';
 import { TextPlugin } from 'gsap/TextPlugin';
 import { gsap } from 'gsap';
@@ -11,6 +13,8 @@ import { useState } from 'react'
 
 // Register the TextPlugin
 gsap.registerPlugin(TextPlugin);
+// Register the ScrollTrigger plugin
+gsap.registerPlugin(ScrollTrigger);
 
 const navigation = [
   { name: 'Product', href: '#' },
@@ -121,6 +125,28 @@ export default function AboutPage() {
 
     // Clean up the timer if the component is unmounted
     return () => clearTimeout(timer);
+  }, []);
+  
+  useEffect(() => {
+    // ensure GSAP is only initialized once
+    gsap.utils.toArray(".fade-in").forEach(section => {
+      gsap.fromTo(section, 
+        { autoAlpha: 0, y: 50 }, 
+        {
+          duration: 1.2, 
+          autoAlpha: 1, 
+          y: 0,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: section,
+            start: "top 80%", // when the top of the element hits the 80% viewport height
+            end: "bottom 40%", // when the bottom of the element exits 60% viewport height
+            toggleActions: "play none none reverse",
+            markers: true // to see the start and end points during development
+          }
+        }
+      );
+    });
   }, []);
 
   return (
@@ -292,54 +318,26 @@ export default function AboutPage() {
         </div>
 
         {/* Logo cloud */}
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="mx-auto grid max-w-lg grid-cols-4 items-center gap-x-8 gap-y-12 sm:max-w-xl sm:grid-cols-6 sm:gap-x-10 sm:gap-y-14 lg:mx-0 lg:max-w-none lg:grid-cols-4">
-            <img
-              className="col-span-2 max-h-64 w-full object-contain lg:col-span-1"
-              src="/pic/ffu.png"
-              alt="Transistor"
-              width={158}
-              height={48}
-            />
-            <img
-              className="col-span-2 max-h-48 w-full object-contain lg:col-span-1"
-              src="/pic/hopstart.png"
-              alt="Reform"
-              width={158}
-              height={48}
-            />
-            <img
-              className="col-span-2 max-h-48 w-full object-contain lg:col-span-1"
-              src="/pic/jhu_logo.png"
-              alt="Tuple"
-              width={158}
-              height={48}
-            />
-            <img
-              className="col-span-2 max-h-48 w-full object-contain sm:col-start-2 lg:col-span-1"
-              src="/pic/jhu_peabody.png"
-              alt="SavvyCal"
-              width={158}
-              height={48}
-            />
-            {/* <img
-              className="col-span-2 col-start-2 max-h-12 w-full object-contain sm:col-start-auto lg:col-span-1"
-              src="https://tailwindui.com/img/logos/158x48/statamic-logo-gray-400.svg"
-              alt="Statamic"
-              width={158}
-              height={48}
-            /> */}
-          </div>
+        <div className="fade-in">
+          <LogoList/>
         </div>
 
         {/* Feature section */}
-        <Features/>
+        <div className="fade-in">
+          <Features/>
+        </div>
+        
 
         {/* Statistics section */}
-        <Statistics/>
+        <div className="fade-in">
+          <Statistics/>
+        </div>
+        
 
         {/* Newsletter section */}
-        <Newsletter/>
+        <div className="fade-in">
+          <Newsletter/>
+        </div>
 
         {/* Testimonials section */}
         {/* <Testimonials/>       */}
