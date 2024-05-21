@@ -142,7 +142,7 @@ export default function AboutPage() {
             start: "top 80%", // when the top of the element hits the 80% viewport height
             end: "bottom 40%", // when the bottom of the element exits 60% viewport height
             toggleActions: "play none none reverse",
-            markers: true // to see the start and end points during development
+            markers: false // to see the start and end points during development
           }
         }
       );
@@ -310,7 +310,7 @@ export default function AboutPage() {
                   transform="translate(24 24)"
                   clipPath="url(#2ade4387-9c63-4fc4-b754-10e687a0d332)"
                 >
-                  <img src="https://tailwindui.com/img/component-images/mobile-app-screenshot.png" alt="" />
+                  <img src="pic/phoneUI.png" alt="" />
                 </foreignObject>
               </svg>
             </div>
