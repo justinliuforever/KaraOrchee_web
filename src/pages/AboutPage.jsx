@@ -158,8 +158,8 @@ export default function AboutPage() {
             <a href="#" className="-m-1.5 p-1.5">
               <span className="sr-only">Your Company</span>
               <img
-                className="h-8 w-auto"
-                src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=600"
+                className="h-16 w-auto"
+                src="pic/Final-08.png"
                 alt=""
               />
             </a>
@@ -195,7 +195,7 @@ export default function AboutPage() {
                 <span className="sr-only">Your Company</span>
                 <img
                   className="h-8 w-auto"
-                  src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=600"
+                  src="pic/Final-08.png"
                   alt=""
                 />
               </a>
@@ -353,8 +353,8 @@ export default function AboutPage() {
         <div className="mx-auto max-w-7xl px-6 pb-8 pt-16 sm:pt-24 lg:px-8 lg:pt-32">
           <div className="xl:grid xl:grid-cols-3 xl:gap-8">
             <img
-              className="h-7"
-              src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=500"
+              className="h-14"
+              src="pic/Final-08.png"
               alt="Company name"
             />
             <div className="mt-16 grid grid-cols-2 gap-8 xl:col-span-2 xl:mt-0">
