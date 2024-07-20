@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
+import AudioPlayer from '../components/AudioPlayer';
 import apiUrl from '../config';
 import axios from 'axios';
 import { useParams } from 'react-router-dom';
@@ -86,10 +87,11 @@ const MusicPlayerPage = () => {
               </div>
             ))}
           </div>
-          <audio controls className="w-full">
+          {/* <audio controls className="w-full">
             <source src={musicData.musicAudioURL} type="audio/mpeg" />
             Your browser does not support the audio element.
-          </audio>
+          </audio> */}
+          <AudioPlayer/>
         </div>
       </div>
     </div>
