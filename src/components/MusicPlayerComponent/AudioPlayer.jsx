@@ -2,6 +2,10 @@ import React, { useEffect, useRef, useState } from 'react';
 
 import apiUrl from '../../config';
 import axios from 'axios';
+import back15sImage from './pic/back_15s.png';
+import forward15sImage from './pic/forward_15s.png';
+import pauseButtonImage from './pic/pause_button.png';
+import playButtonImage from './pic/play_button.png';
 import { useParams } from 'react-router-dom';
 
 const AudioPlayer = () => {
@@ -76,6 +80,18 @@ const AudioPlayer = () => {
     handleProgressChange(e);
   };
 
+  const rewind15Seconds = () => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = Math.max(audioRef.current.currentTime - 15, 0);
+    }
+  };
+
+  const forward15Seconds = () => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = Math.min(audioRef.current.currentTime + 15, duration);
+    }
+  };
+
   if (!musicData) {
     return <p>Loading...</p>;
   }
@@ -128,28 +144,19 @@ const AudioPlayer = () => {
         </div>
       </div>
       <div className="bg-gray-50 text-black dark:bg-gray-900 dark:text-white lg:rounded-b-xl py-4 px-1 sm:px-3 lg:px-1 xl:px-3 flex justify-center">
-        <button type="button" className="mx-auto" onClick={togglePlayPause}>
-          <svg width="50" height="50" fill="none">
-            <circle
-              className="text-gray-300 dark:text-gray-500"
-              cx="25"
-              cy="25"
-              r="24"
-              stroke="currentColor"
-              strokeWidth="1.5"
-            />
-            {isPlaying ? (
-              <path
-                d="M18 16h4v18h-4V16zM28 16h4v18h-4z"
-                fill="currentColor"
-              />
-            ) : (
-              <path
-                d="M20 16l14 9-14 9V16z"
-                fill="currentColor"
-              />
-            )}
-          </svg>
+        <button type="button" className="mx-2" onClick={rewind15Seconds}>
+          <img src={back15sImage} alt="Rewind 15 seconds" width="50" height="50" />
+        </button>
+        <button type="button" className="mx-2" onClick={togglePlayPause}>
+          <img
+            src={isPlaying ? pauseButtonImage : playButtonImage}
+            alt={isPlaying ? 'Pause' : 'Play'}
+            width="50"
+            height="50"
+          />
+        </button>
+        <button type="button" className="mx-2" onClick={forward15Seconds}>
+          <img src={forward15sImage} alt="Forward 15 seconds" width="50" height="50" />
         </button>
       </div>
       <audio ref={audioRef} className="w-full mt-4">

@@ -17,7 +17,7 @@ gsap.registerPlugin(TextPlugin);
 gsap.registerPlugin(ScrollTrigger);
 
 const navigation = [
-  { name: 'Product', href: '#' },
+  { name: 'Music Library', href: '/library' },
   // { name: 'Features', href: '#' },
   // { name: 'Marketplace', href: '#' },
   // { name: 'Company', href: '#' },
@@ -139,10 +139,10 @@ export default function AboutPage() {
           ease: 'none',
           scrollTrigger: {
             trigger: section,
-            start: "top 80%", // when the top of the element hits the 80% viewport height
-            end: "bottom 40%", // when the bottom of the element exits 60% viewport height
+            start: "top 80%",
+            end: "bottom 40%",
             toggleActions: "play none none reverse",
-            markers: false // to see the start and end points during development
+            markers: false
           }
         }
       );
