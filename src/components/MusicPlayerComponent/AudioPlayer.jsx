@@ -159,7 +159,7 @@ const AudioPlayer = () => {
           <img src={forward15sImage} alt="Forward 15 seconds" width="50" height="50" />
         </button>
       </div>
-      <audio ref={audioRef} className="w-full mt-4">
+      <audio ref={audioRef} preload="auto" className="w-full mt-4">
         <source src={musicData.musicAudioURL} type="audio/mpeg" />
         Your browser does not support the audio element.
       </audio>

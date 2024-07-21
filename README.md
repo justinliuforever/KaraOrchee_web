@@ -14,3 +14,7 @@ https://bg.ibelick.com/?utm_source=tailkits&utm_medium=referral&utm_campaign=com
 TailwindComponent:
 
 https://tailkits.com/components/
+
+Icon button:
+
+https://icons8.com/icon/set/stop-play-button/ios--static--white
