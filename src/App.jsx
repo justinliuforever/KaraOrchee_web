@@ -1,6 +1,7 @@
 import { Navigate, Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 
 import AboutPage from './pages/AboutPage';
+import BeatDetectorPage from './pages/BeatDetectorPage';
 import LibraryPage from './pages/LibraryPage';
 import MainPage from './pages/MainPage';
 import MusicPlayerPage from './pages/MusicPlayerPage';
@@ -16,6 +17,7 @@ export default function App() {
         <Route path="/Library" element={<LibraryPage />} />
         <Route path="/Library/:id" element={<MusicPlayerPage />} />
         <Route path="/MusicPlayerXMLPage" element={<MusicPlayerXMLPage />} />
+        <Route path="/BeatDetectorPage" element={<BeatDetectorPage />} />
       </Routes>
     </Router>
   );
