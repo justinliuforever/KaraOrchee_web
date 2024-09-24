@@ -1,11 +1,16 @@
+import { Chart, registerables } from 'chart.js';
 import React, { useEffect, useRef, useState } from 'react';
 
+import { Line } from 'react-chartjs-2';
 import Meyda from 'meyda';
+
+Chart.register(...registerables);
 
 const BeatDetector = () => {
   const [isListening, setIsListening] = useState(false);
   const [beatDetected, setBeatDetected] = useState(false);
   const [energy, setEnergy] = useState(null);
+  const [energyData, setEnergyData] = useState([]);
   const audioContextRef = useRef(null);
   const micRef = useRef(null);
   const analyzerRef = useRef(null);
@@ -33,6 +38,7 @@ const BeatDetector = () => {
       callback: features => {
         const currentEnergy = features.energy;
         setEnergy(currentEnergy);
+        setEnergyData(prevData => [...prevData.slice(-99), currentEnergy]); // 保持数据长度为100
         const currentTime = audioContextRef.current.currentTime;
         const timeDiff = currentTime - lastBeatTimeRef.current;
         if (timeDiff > 0.5 && currentEnergy > 0.1) { // 假设0.5秒为一个节拍，能量阈值为0.1
@@ -57,6 +63,31 @@ const BeatDetector = () => {
     }
   };
 
+  const data = {
+    labels: Array.from({ length: energyData.length }, (_, i) => i + 1),
+    datasets: [
+      {
+        label: 'Energy',
+        data: energyData,
+        borderColor: 'rgba(75, 192, 192, 1)',
+        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+        fill: true,
+      },
+    ],
+  };
+
+  const options = {
+    responsive: true,
+    scales: {
+      x: {
+        display: false,
+      },
+      y: {
+        beginAtZero: true,
+      },
+    },
+  };
+
   return (
     <div className="text-center">
       <button
@@ -73,6 +104,9 @@ const BeatDetector = () => {
           Energy: {energy.toFixed(2)}
         </div>
       )}
+      <div className="mt-4">
+        <Line data={data} options={options} />
+      </div>
     </div>
   );
 };
