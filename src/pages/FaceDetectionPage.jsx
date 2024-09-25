@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 
+import config from '../config';
+
 const FaceDetectionPage = () => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
@@ -53,7 +55,8 @@ const FaceDetectionPage = () => {
 
   useEffect(() => {
     const connectWebSocket = () => {
-      const websocket = new WebSocket('ws://127.0.0.1:8000/ws/video');
+      //const websocket = new WebSocket('ws://127.0.0.1:8000/ws/video');
+      const websocket = new WebSocket(config.ws); 
       websocket.binaryType = 'arraybuffer';
 
       websocket.onopen = () => {

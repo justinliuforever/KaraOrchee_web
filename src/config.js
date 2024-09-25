@@ -1,9 +1,15 @@
 // config.js
 const config = {
-  local: 'http://localhost:5555/music/',
-  remote: 'https://music-backend-az25.onrender.com/music/',
+  local: {
+    apiUrl: 'http://localhost:5555/music/',
+    ws: 'ws://localhost:8000/ws/video',
+  },
+  remote: {
+    apiUrl: 'https://music-backend-az25.onrender.com/music/',
+    ws: 'wss://karaorchee-cv-backend.onrender.com/ws/video',
+  },
 };
 
-const activeEnv = 'local'; // Change to 'remote' when deploying to production
+const activeEnv = 'remote'; // Change to 'remote' for production
 
 export default config[activeEnv];

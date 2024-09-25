@@ -2,8 +2,8 @@
 import React, { useEffect, useState } from 'react';
 
 import MusicCard from '../components/MusicCard';
-import apiUrl from '../config'; // Import the API URL from the config file
 import axios from 'axios';
+import config from '../config'; // Import the API URL from the config file
 
 const LibraryPage = () => {
   const [musicData, setMusicData] = useState([]);
@@ -11,8 +11,13 @@ const LibraryPage = () => {
   useEffect(() => {
     const fetchMusicData = async () => {
       try {
-        const response = await axios.get(apiUrl);
-        setMusicData(response.data);
+        const response = await axios.get(config.apiUrl);
+        
+        if (Array.isArray(response.data)) {
+          setMusicData(response.data);
+        } else {
+          console.error('Expected an array but got:', response.data);
+        }
       } catch (error) {
         console.error('Error fetching music data:', error);
       }

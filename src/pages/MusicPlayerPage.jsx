@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 
 import AudioPlayer from '../components/MusicPlayerComponent/AudioPlayer';
 import ScoreDisplay from '../components/MusicPlayerComponent/ScoreDisplay';
-import apiUrl from '../config';
 import axios from 'axios';
+import config from '../config';
 import { useParams } from 'react-router-dom';
 
 const MusicPlayerPage = () => {
@@ -15,7 +15,7 @@ const MusicPlayerPage = () => {
   useEffect(() => {
     const fetchMusicData = async () => {
       try {
-        const response = await axios.get(`${apiUrl}${id}`);
+        const response = await axios.get(`${config.apiUrl}${id}`);
         setMusicData(response.data);
       } catch (error) {
         console.error('Error fetching music data:', error);

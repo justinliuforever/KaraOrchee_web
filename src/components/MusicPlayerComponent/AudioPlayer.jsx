@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 
-import apiUrl from '../../config';
 import axios from 'axios';
 import back15sImage from './pic/back_15s.png';
+import config from '../../config';
 import forward15sImage from './pic/forward_15s.png';
 import pauseButtonImage from './pic/pause_button.png';
 import playButtonImage from './pic/play_button.png';
@@ -20,7 +20,7 @@ const AudioPlayer = () => {
   useEffect(() => {
     const fetchMusicData = async () => {
       try {
-        const response = await axios.get(`${apiUrl}${id}`);
+        const response = await axios.get(`${config.apiUrl}${id}`);
         setMusicData(response.data);
       } catch (error) {
         console.error('Error fetching music data:', error);
