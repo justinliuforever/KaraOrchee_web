@@ -2,6 +2,7 @@ import { Navigate, Route, BrowserRouter as Router, Routes } from 'react-router-d
 
 import AboutPage from './pages/AboutPage';
 import BeatDetectorPage from './pages/BeatDetectorPage';
+import EyeStateDetectionPage from './pages/EyeStateDetectionPage';
 import FaceDetectionPage from './pages/FaceDetectionPage';
 import LibraryPage from './pages/LibraryPage';
 import MusicPlayerPage from './pages/MusicPlayerPage';
@@ -17,6 +18,7 @@ export default function App() {
         <Route path="/Library/:id" element={<MusicPlayerPage />} />
         <Route path="/BeatDetectorPage" element={<BeatDetectorPage />} />
         <Route path="/FaceDetectionPage" element={<FaceDetectionPage />} />
+        <Route path="/EyeStateDetectionPage" element={<EyeStateDetectionPage />} />
       </Routes>
     </Router>
   );

@@ -19,6 +19,7 @@ gsap.registerPlugin(ScrollTrigger);
 const navigation = [
   { name: 'Music Library', href: '/library' },
   { name: 'Face Detection', href: '/FaceDetectionPage' },
+  { name: 'Eye State Detection', href: '/EyeStateDetectionPage' },
   { name: 'Beat Detection', href: '/BeatDetectorPage' },
   // { name: 'Marketplace', href: '#' },
   // { name: 'Company', href: '#' },
