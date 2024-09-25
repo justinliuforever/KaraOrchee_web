@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import AudioPlayer from '../components/MusicPlayerComponent/AudioPlayer';
 import ScoreDisplay from '../components/MusicPlayerComponent/ScoreDisplay';

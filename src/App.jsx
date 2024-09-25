@@ -6,7 +6,6 @@ import FaceDetectionPage from './pages/FaceDetectionPage';
 import LibraryPage from './pages/LibraryPage';
 import MainPage from './pages/MainPage';
 import MusicPlayerPage from './pages/MusicPlayerPage';
-import MusicPlayerXMLPage from './pages/MusicPlayerXMLPage';
 
 export default function App() {
   return (
@@ -17,7 +16,6 @@ export default function App() {
         <Route path="/about" element={<AboutPage />} />
         <Route path="/Library" element={<LibraryPage />} />
         <Route path="/Library/:id" element={<MusicPlayerPage />} />
-        <Route path="/MusicPlayerXMLPage" element={<MusicPlayerXMLPage />} />
         <Route path="/BeatDetectorPage" element={<BeatDetectorPage />} />
         <Route path="/FaceDetectionPage" element={<FaceDetectionPage />} />
       </Routes>

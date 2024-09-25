@@ -1,5 +1,4 @@
 import BeatDetector from '../components/BeatDetector';
-import React from 'react';
 
 const BeatDetectorPage = () => {
   return (

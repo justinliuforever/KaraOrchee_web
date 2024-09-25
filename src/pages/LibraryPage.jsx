@@ -1,9 +1,9 @@
 // LibraryPage.js
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import MusicCard from '../components/MusicCard';
 import axios from 'axios';
-import config from '../config'; // Import the API URL from the config file
+import config from '../config';
 
 const LibraryPage = () => {
   const [musicData, setMusicData] = useState([]);

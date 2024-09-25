@@ -1,7 +1,7 @@
-// Import necessary libraries
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay';
+import PropTypes from 'prop-types';
 
 // Create a component to display the music score
 const MusicXMLViewer = ({ musicXML }) => {
@@ -25,6 +25,11 @@ const MusicXMLViewer = ({ musicXML }) => {
   }, [musicXML]);
 
   return <div ref={osmdContainer} className="osmd-container"></div>;
+};
+
+
+MusicXMLViewer.propTypes = {
+  musicXML: PropTypes.string.isRequired,
 };
 
 export default MusicXMLViewer;
