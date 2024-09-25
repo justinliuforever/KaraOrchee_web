@@ -2,11 +2,11 @@ import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 import { useEffect, useRef } from 'react';
 
 import { Dialog } from '@headlessui/react'
-import Features from '../components/Features'
-import LogoList from '../components/LogoList'
-import Newsletter from '../components/Newsletter'
+import Features from '../components/AboutPageComponent/Features'
+import LogoList from '../components/AboutPageComponent/LogoList'
+import Newsletter from '../components/AboutPageComponent/Newsletter'
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import Statistics from '../components/Statistics';
+import Statistics from '../components/AboutPageComponent/Statistics';
 import { TextPlugin } from 'gsap/TextPlugin';
 import { gsap } from 'gsap';
 import { useState } from 'react'
@@ -18,7 +18,8 @@ gsap.registerPlugin(ScrollTrigger);
 
 const navigation = [
   { name: 'Music Library', href: '/library' },
-  // { name: 'Features', href: '#' },
+  { name: 'Face Detection', href: '/FaceDetectionPage' },
+  { name: 'Beat Detection', href: '/BeatDetectorPage' },
   // { name: 'Marketplace', href: '#' },
   // { name: 'Company', href: '#' },
 ]

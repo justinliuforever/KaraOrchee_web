@@ -1,5 +1,4 @@
-// MusicCard.js
-import React from 'react';
+import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 
 const MusicCard = ({ imageUrl, title, artist, id }) => {
@@ -27,6 +26,13 @@ const MusicCard = ({ imageUrl, title, artist, id }) => {
       </div>
     </div>
   );
+};
+
+MusicCard.propTypes = {
+  imageUrl: PropTypes.string.isRequired,
+  title: PropTypes.string.isRequired,
+  artist: PropTypes.string.isRequired,
+  id: PropTypes.string.isRequired,
 };
 
 export default MusicCard;

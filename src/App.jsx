@@ -4,7 +4,6 @@ import AboutPage from './pages/AboutPage';
 import BeatDetectorPage from './pages/BeatDetectorPage';
 import FaceDetectionPage from './pages/FaceDetectionPage';
 import LibraryPage from './pages/LibraryPage';
-import MainPage from './pages/MainPage';
 import MusicPlayerPage from './pages/MusicPlayerPage';
 
 export default function App() {
