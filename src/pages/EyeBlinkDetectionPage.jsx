@@ -8,6 +8,7 @@ const EyeBlinkDetectionPage = () => {
   const [status, setStatus] = useState('No Blink');
   const [earValue, setEarValue] = useState(0);
   const [blinkCount, setBlinkCount] = useState(0);
+  const [doubleBlinkDetected, setDoubleBlinkDetected] = useState(false);
   const [ws, setWs] = useState(null);
   const [showLandmarks, setShowLandmarks] = useState(true);
   const [fps, setFps] = useState(0);
@@ -17,6 +18,8 @@ const EyeBlinkDetectionPage = () => {
   const frameTimestamps = useRef([]);
   const lastFrameTime = useRef(0);
   const lastSentTime = useRef(0);
+  const lastBlinkTime = useRef(0);
+  const blinkThreshold = 500; // 500ms threshold for double blink detection
 
   const connectWebSocket = useCallback(() => {
     const websocket = new WebSocket(`${config.ws}/eye-blink`);
@@ -29,16 +32,45 @@ const EyeBlinkDetectionPage = () => {
     websocket.onmessage = (event) => {
       const currentTime = performance.now();
       const data = JSON.parse(event.data);
-      setStatus(data.status);
+      console.log("Raw data received:", data);
+
+      setStatus(data.status || 'No status');
       
-      const earMatch = data.status.match(/EAR: (\d+\.\d+)/);
-      if (earMatch) {
-        setEarValue(parseFloat(earMatch[1]));
+      // Update EAR value
+      if (data.ear !== undefined) {
+        console.log("Updating EAR value:", data.ear);
+        setEarValue(data.ear);
+      } else if (data.frame && typeof data.frame === 'string') {
+        const earMatch = data.frame.match(/EAR: (\d+\.\d+)/);
+        if (earMatch) {
+          const newEarValue = parseFloat(earMatch[1]);
+          console.log("Extracted EAR value from frame:", newEarValue);
+          setEarValue(newEarValue);
+        } else {
+          console.log("EAR value not found in frame data");
+        }
+      } else {
+        console.log("EAR value not found in data");
       }
 
-      const blinkMatch = data.status.match(/Blinks: (\d+)/);
-      if (blinkMatch) {
-        setBlinkCount(parseInt(blinkMatch[1]));
+      // Update blink count
+      if (data.status === 'Blinking') {
+        console.log("Blink detected, updating count");
+        setBlinkCount(prevCount => {
+          const newCount = prevCount + 1;
+          return newCount;
+        });
+      }
+
+      // Double blink detection logic
+      if (data.status === 'Blinking') {
+        const timeSinceLastBlink = currentTime - lastBlinkTime.current;
+        if (timeSinceLastBlink <= blinkThreshold) {
+          setDoubleBlinkDetected(true);
+          console.log("Double blink detected! Trigger action.");
+          setTimeout(() => setDoubleBlinkDetected(false), 1000); // Reset after 1 second
+        }
+        lastBlinkTime.current = currentTime;
       }
 
       // Calculate processing time and network latency
@@ -142,8 +174,9 @@ const EyeBlinkDetectionPage = () => {
       <video ref={videoRef} width="640" height="480" className="border"></video>
       <canvas ref={canvasRef} width="640" height="480" className="border"></canvas>
       <div className="mt-4 text-2xl">Status: {status}</div>
-      <div className="mt-2 text-xl">EAR Value: {earValue.toFixed(2)}</div>
+      <div className="mt-2 text-xl">EAR Value: {earValue.toFixed(4)}</div>
       <div className="mt-2 text-xl">Blink Count: {blinkCount}</div>
+      <div className="mt-2 text-xl">Double Blink Detected: {doubleBlinkDetected ? 'Yes' : 'No'}</div>
       <div className="mt-2 text-xl">FPS: {fps}</div>
       <div className="mt-2 text-xl">Processing Time: {processingTime.toFixed(2)} ms</div>
       <div className="mt-2 text-xl">Network Latency: {networkLatency.toFixed(2)} ms</div>
