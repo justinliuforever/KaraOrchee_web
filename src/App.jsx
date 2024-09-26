@@ -3,8 +3,8 @@ import { Navigate, Route, BrowserRouter as Router, Routes } from 'react-router-d
 import AboutPage from './pages/AboutPage';
 import BeatDetectorPage from './pages/BeatDetectorPage';
 import EyeStateDetectionPage from './pages/EyeStateDetectionPage';
-import FaceDetectionPage from './pages/FaceDetectionPage';
 import LibraryPage from './pages/LibraryPage';
+import MouthStateDetectionPage from './pages/MouthStateDetectionPage';
 import MusicPlayerPage from './pages/MusicPlayerPage';
 
 export default function App() {
@@ -17,7 +17,7 @@ export default function App() {
         <Route path="/Library" element={<LibraryPage />} />
         <Route path="/Library/:id" element={<MusicPlayerPage />} />
         <Route path="/BeatDetectorPage" element={<BeatDetectorPage />} />
-        <Route path="/FaceDetectionPage" element={<FaceDetectionPage />} />
+        <Route path="/MouthStateDetectionPage" element={<MouthStateDetectionPage />} />
         <Route path="/EyeStateDetectionPage" element={<EyeStateDetectionPage />} />
       </Routes>
     </Router>

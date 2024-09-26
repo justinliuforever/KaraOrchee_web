@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import config from '../config';
 
-const FaceDetectionPage = () => {
+const MouthStateDetectionPage = () => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const [status, setStatus] = useState('No Face Detected');
@@ -32,7 +32,7 @@ const FaceDetectionPage = () => {
 
     const sendFrame = () => {
       if (ws && ws.readyState === WebSocket.OPEN) {
-        context.drawImage(video, 0, 0, canvas.width / 2, canvas.height / 2); // reducing size, improve speed
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
         canvas.toBlob(blob => {
           if (blob) {
             blob.arrayBuffer().then(buffer => {
@@ -56,7 +56,7 @@ const FaceDetectionPage = () => {
   useEffect(() => {
     const connectWebSocket = () => {
       //const websocket = new WebSocket('ws://127.0.0.1:8000/ws/video');
-      const websocket = new WebSocket(`${config.ws}/video`); 
+      const websocket = new WebSocket(`${config.ws}/mouth-state`); 
       websocket.binaryType = 'arraybuffer';
 
       websocket.onopen = () => {
@@ -111,4 +111,4 @@ const FaceDetectionPage = () => {
   );
 };
 
-export default FaceDetectionPage;
+export default MouthStateDetectionPage;
