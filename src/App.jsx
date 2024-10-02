@@ -1,10 +1,11 @@
 import { Navigate, Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 
 import AboutPage from './pages/AboutPage';
+import AudioPlayerWithCV from './pages/AudioPlayerWithCV';
 import BeatDetectorPage from './pages/BeatDetectorPage';
 import EyeBlinkDetectionPage from './pages/EyeBlinkDetectionPage';
 import EyeStateDetectionPage from './pages/EyeStateDetectionPage';
-import HeadPoseDetectionPage from './pages/HeadPoseDetectionPage'; // Import the new page
+import HeadPoseDetectionPage from './pages/HeadPoseDetectionPage';
 import LibraryPage from './pages/LibraryPage';
 import MouthStateDetectionPage from './pages/MouthStateDetectionPage';
 import MusicPlayerPage from './pages/MusicPlayerPage';
@@ -21,7 +22,8 @@ export default function App() {
         <Route path="/MouthStateDetectionPage" element={<MouthStateDetectionPage />} />
         <Route path="/EyeStateDetectionPage" element={<EyeStateDetectionPage />} />
         <Route path="/EyeBlinkDetectionPage" element={<EyeBlinkDetectionPage />} />
-        <Route path="/HeadPoseDetectionPage" element={<HeadPoseDetectionPage />} /> {/* Add the new route */}
+        <Route path="/HeadPoseDetectionPage" element={<HeadPoseDetectionPage />} />
+        <Route path="/AudioPlayerWithCV" element={<AudioPlayerWithCV />} />
       </Routes>
     </Router>
   );

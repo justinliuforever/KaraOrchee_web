@@ -18,10 +18,11 @@ gsap.registerPlugin(ScrollTrigger);
 
 const navigation = [
   { name: 'Music Library', href: '/library' },
-  { name: 'Mouth State Detection', href: '/MouthStateDetectionPage' },
-  { name: 'Eye State Detection', href: '/EyeStateDetectionPage' },
+  // { name: 'Mouth State Detection', href: '/MouthStateDetectionPage' },
+  // { name: 'Eye State Detection', href: '/EyeStateDetectionPage' },
   { name: 'Head Pose Detection', href: '/HeadPoseDetectionPage' },
   { name: 'Beat Detection', href: '/BeatDetectorPage' },
+  { name: 'Audio Player with CV', href: '/AudioPlayerWithCV' },
   // { name: 'Marketplace', href: '#' },
   // { name: 'Company', href: '#' },
 ]
