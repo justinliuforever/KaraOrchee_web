@@ -1,24 +1,38 @@
 import React, { useCallback, useEffect } from 'react';
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 
+import PropTypes from 'prop-types';
 import useHeadPoseDetection from '../hooks/useHeadPoseDetection';
 
-const HeadPoseControl = ({ onUnlock, onPlay, isPlaying }) => {
+// SETTINGS
+// The pitch angle (in degrees) at which the control unlocks
+const UNLOCK_THRESHOLD = 20;
+
+// The pitch angle (in degrees) at which playback starts after unlocking
+const PLAY_THRESHOLD = 15;
+
+// The range of motion for the visual element (min, neutral, max)
+const MOTION_RANGE = [-150, 0, 150];
+
+// The range of pitch values mapped to unlock progress (0% to 100%)
+const PROGRESS_RANGE = [-75, -15];
+
+// The color range for the visual feedback (start color, middle color, end color)
+const COLOR_RANGE = ["#ff008c", "#7700ff", "rgb(230, 255, 0)"];
+
+
+const HeadPoseControl = ({ onUnlock, onPlay, isPlaying, onHeadDetectionChange }) => {
   const { videoRef, canvasRef, status, pitch } = useHeadPoseDetection();
   const [isUnlocked, setIsUnlocked] = React.useState(false);
 
   const y = useMotionValue(0);
   const ySpring = useSpring(y, { stiffness: 300, damping: 30 });
-  const scale = useTransform(ySpring, [-150, 0, 150], [0.8, 1, 1.2]);
-  const background = useTransform(
-    ySpring,
-    [-150, 0, 150],
-    ["#ff008c", "#7700ff", "rgb(230, 255, 0)"]
-  );
+  const scale = useTransform(ySpring, MOTION_RANGE, [0.8, 1, 1.2]);
+  const background = useTransform(ySpring, MOTION_RANGE, COLOR_RANGE);
 
   const unlockProgress = useTransform(
     ySpring,
-    [-75, -15],
+    PROGRESS_RANGE,
     [100, 0]
   );
 
@@ -34,10 +48,10 @@ const HeadPoseControl = ({ onUnlock, onPlay, isPlaying }) => {
 
   useEffect(() => {
     if (pitch !== null) {
-      if (pitch >= 20 && !isUnlocked) {
+      if (pitch >= UNLOCK_THRESHOLD && !isUnlocked) {
         setIsUnlocked(true);
         onUnlock();
-      } else if (pitch < 15 && isUnlocked && !isPlaying) {
+      } else if (pitch < PLAY_THRESHOLD && isUnlocked && !isPlaying) {
         onPlay();
       }
     }
@@ -49,8 +63,12 @@ const HeadPoseControl = ({ onUnlock, onPlay, isPlaying }) => {
     }
   }, [isPlaying, resetUnlocked]);
 
+  useEffect(() => {
+    onHeadDetectionChange(status === 'detected');
+  }, [status, onHeadDetectionChange]);
+
   return (
-    <div style={{ position: 'relative', width: 300, height: 300, border: '1px solid black', overflow: 'hidden' }}>
+    <div style={{ position: 'relative', width: 60, height: 260, border: '1px solid black', overflow: 'hidden' }}>
       <motion.div
         style={{
           position: 'absolute',
@@ -66,8 +84,8 @@ const HeadPoseControl = ({ onUnlock, onPlay, isPlaying }) => {
       />
       <motion.div
         style={{
-          width: 50,
-          height: 50,
+          width: 20,
+          height: 40,
           borderRadius: 10,
           position: 'absolute',
           left: '50%',
@@ -80,9 +98,11 @@ const HeadPoseControl = ({ onUnlock, onPlay, isPlaying }) => {
         animate={isUnlocked ? { rotate: 360 } : { rotate: 0 }}
         transition={{ type: 'spring', stiffness: 260, damping: 20 }}
       />
-      <p className="mt-4">Status: {status}</p>
+      {/* <p className="mt-4">Status: {status}</p>
       <p>Pitch: {pitch?.toFixed(2)}</p>
       <p>Unlocked: {isUnlocked ? 'Yes' : 'No'}</p>
+      <p>Head Detected: {status === 'detected' ? 'Yes' : 'No'}</p> */}
+      
       {/* Hidden video and canvas elements required for head pose detection */}
       <video
         ref={videoRef}
@@ -98,6 +118,13 @@ const HeadPoseControl = ({ onUnlock, onPlay, isPlaying }) => {
       ></canvas>
     </div>
   );
+};
+
+HeadPoseControl.propTypes = {
+  onUnlock: PropTypes.func.isRequired,
+  onPlay: PropTypes.func.isRequired,
+  isPlaying: PropTypes.bool.isRequired,
+  onHeadDetectionChange: PropTypes.func.isRequired,
 };
 
 export default HeadPoseControl;

@@ -1,10 +1,11 @@
-import React, { useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 
 import HeadPoseControl from '../components/HeadPoseControl';
 
 const AudioPlayerWithCV = () => {
   const audioRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isHeadDetected, setIsHeadDetected] = useState(false);
 
   const handleUnlock = () => {
     console.log('Unlocked');
@@ -24,6 +25,10 @@ const AudioPlayerWithCV = () => {
     }
   };
 
+  const handleHeadDetectionChange = (detected) => {
+    setIsHeadDetected(detected);
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100">
       <h1 className="text-4xl font-bold mb-8">Audio Player with CV Control</h1>
@@ -35,8 +40,14 @@ const AudioPlayerWithCV = () => {
         controls
         className="mb-4"
       ></audio>
-      <HeadPoseControl onUnlock={handleUnlock} onPlay={handlePlay} isPlaying={isPlaying} />
+      <HeadPoseControl 
+        onUnlock={handleUnlock} 
+        onPlay={handlePlay} 
+        isPlaying={isPlaying} 
+        onHeadDetectionChange={handleHeadDetectionChange}
+      />
       <p>Playing: {isPlaying ? 'Yes' : 'No'}</p>
+      <p>Head Detected: {isHeadDetected ? 'Yes' : 'No'}</p>
     </div>
   );
 };

@@ -5,7 +5,7 @@ import config from '../config';
 const useHeadPoseDetection = () => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
-  const [status, setStatus] = useState('No Face Detected');
+  const [status, setStatus] = useState('initializing');
   const [pitch, setPitch] = useState(null);
   const [yaw, setYaw] = useState(null);
   const [roll, setRoll] = useState(null);
@@ -72,7 +72,7 @@ const useHeadPoseDetection = () => {
 
       websocket.onmessage = (event) => {
         const data = JSON.parse(event.data);
-        setStatus(data.status);
+        setStatus(data.pitch !== null ? 'detected' : 'no face');
         setPitch(data.pitch);
         setYaw(data.yaw);
         setRoll(data.roll);
