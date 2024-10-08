@@ -68,7 +68,19 @@ const HeadPoseControl = ({ onUnlock, onPlay, isPlaying, onHeadDetectionChange })
   }, [status, onHeadDetectionChange]);
 
   return (
-    <div style={{ position: 'relative', width: 60, height: 260, border: '1px solid black', overflow: 'hidden' }}>
+    <div style={{
+      position: 'relative',
+      width: 80,
+      height: 300,
+      borderRadius: 40,
+      backgroundColor: '#f0f0f0',
+      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08)',
+      overflow: 'hidden',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+    }}>
       <motion.div
         style={{
           position: 'absolute',
@@ -76,7 +88,8 @@ const HeadPoseControl = ({ onUnlock, onPlay, isPlaying, onHeadDetectionChange })
           left: 0,
           right: 0,
           backgroundColor: '#7700ff',
-          opacity: 0.3,
+          opacity: 0.2,
+          borderRadius: '0 0 40px 40px',
         }}
         animate={{
           height: unlockProgress.get() + '%',
@@ -84,9 +97,9 @@ const HeadPoseControl = ({ onUnlock, onPlay, isPlaying, onHeadDetectionChange })
       />
       <motion.div
         style={{
-          width: 20,
-          height: 40,
-          borderRadius: 10,
+          width: 30,
+          height: 60,
+          borderRadius: 15,
           position: 'absolute',
           left: '50%',
           top: '50%',
@@ -94,6 +107,7 @@ const HeadPoseControl = ({ onUnlock, onPlay, isPlaying, onHeadDetectionChange })
           y: ySpring,
           scale,
           background,
+          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
         }}
         animate={isUnlocked ? { rotate: 360 } : { rotate: 0 }}
         transition={{ type: 'spring', stiffness: 260, damping: 20 }}
