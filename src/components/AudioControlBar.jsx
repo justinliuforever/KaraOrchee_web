@@ -28,7 +28,10 @@ const AudioControlBar = ({ audioRef, isPlaying, onPlay, onPause, currentTime, du
   };
 
   const handleSeek = (e) => {
-    const seekTime = (e.nativeEvent.offsetX / e.target.clientWidth) * duration;
+    const progressBar = e.currentTarget;
+    const rect = progressBar.getBoundingClientRect();
+    const seekPercentage = (e.clientX - rect.left) / rect.width;
+    const seekTime = seekPercentage * duration;
     if (audioRef.current) {
       audioRef.current.currentTime = seekTime;
     }
@@ -61,9 +64,13 @@ const AudioControlBar = ({ audioRef, isPlaying, onPlay, onPause, currentTime, du
         </div>
         {/* Progress bar section */}
         <div className="mb-2">
-          <div className="bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden cursor-pointer" onClick={handleSeek}>
+          <div 
+            className="bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden cursor-pointer" 
+            onClick={handleSeek}
+            style={{ position: 'relative', height: '8px' }}
+          >
             <motion.div
-              className="h-2 bg-blue-500"
+              className="h-full bg-blue-500"
               style={{ width: `${progress}%` }}
               initial={{ width: 0 }}
               animate={{ width: `${progress}%` }}
