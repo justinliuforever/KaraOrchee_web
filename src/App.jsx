@@ -9,6 +9,7 @@ import HeadPoseDetectionPage from './pages/HeadPoseDetectionPage';
 import LibraryPage from './pages/LibraryPage';
 import MouthStateDetectionPage from './pages/MouthStateDetectionPage';
 import MusicPlayerPage from './pages/MusicPlayerPage';
+import VerifySubscriptionPage from './pages/VerifySubscriptionPage';
 
 export default function App() {
   return (
@@ -24,6 +25,7 @@ export default function App() {
         <Route path="/EyeBlinkDetectionPage" element={<EyeBlinkDetectionPage />} />
         <Route path="/HeadPoseDetectionPage" element={<HeadPoseDetectionPage />} />
         <Route path="/AudioPlayerWithCV" element={<AudioPlayerWithCV />} />
+        <Route path="/verify-subscription/:token" element={<VerifySubscriptionPage />} />
       </Routes>
     </Router>
   );
