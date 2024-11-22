@@ -12,6 +12,6 @@ const config = {
   },
 };
 
-const activeEnv = 'local'; // Change to 'remote' for production
+const activeEnv = 'remote'; // Change to 'remote' for production
 
 export default config[activeEnv];
