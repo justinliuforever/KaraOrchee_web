@@ -21,7 +21,7 @@ const PROGRESS_RANGE = [-75, -15];
 const COLOR_RANGE = ["#ff008c", "#7700ff", "rgb(230, 255, 0)"];
 
 
-const HeadPoseControl = ({ onUnlock, onPlay, isPlaying, onHeadDetectionChange }) => {
+const HeadPoseControl = ({ onUnlock, onPlay, isPlaying, onHeadDetectionChange, onClose }) => {
   const { videoRef, canvasRef, status, pitch } = useHeadPoseDetection();
   const [isUnlocked, setIsUnlocked] = React.useState(false);
   const [waitingForPlayGesture, setWaitingForPlayGesture] = React.useState(false);
@@ -72,76 +72,111 @@ const HeadPoseControl = ({ onUnlock, onPlay, isPlaying, onHeadDetectionChange })
   }, [status, onHeadDetectionChange]);
 
   return (
-    <div style={{
-      position: 'relative',
-      width: 80,
-      height: 300,
-      borderRadius: 40,
-      backgroundColor: '#f0f0f0',
-      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08)',
-      overflow: 'hidden',
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'center',
-    }}>
-      <div className="absolute top-4 left-0 right-0 text-center">
-        <span className="text-xs font-medium text-blue-500">
-          {!isUnlocked ? 'Lift head to unlock' : 
-           waitingForPlayGesture ? 'Nod to skip cadenza' : 
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center"
+    >
+      {/* Backdrop with blur effect */}
+      <div className="absolute inset-0 bg-black/30 backdrop-blur-md" />
+
+      {/* Modal Content */}
+      <motion.div
+        initial={{ scale: 0.9, y: 20 }}
+        animate={{ scale: 1, y: 0 }}
+        exit={{ scale: 0.9, y: 20 }}
+        className="relative z-10 bg-white/90 dark:bg-gray-800/90 rounded-3xl shadow-2xl p-8 max-w-lg w-full mx-4 backdrop-blur-sm"
+      >
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-serif text-gray-900 dark:text-white mb-2">
+            Cadenza Control
+          </h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Use head gestures to control the cadenza section
+          </p>
+        </div>
+
+        {/* Head pose visualization */}
+        <div className="flex justify-center mb-6">
+          <div style={{
+            position: 'relative',
+            width: 100,
+            height: 360,
+            borderRadius: 50,
+            background: 'linear-gradient(145deg, #ffffff, #f0f0f0)',
+            boxShadow: '20px 20px 60px #bebebe, -20px -20px 60px #ffffff',
+            overflow: 'hidden',
+          }}>
+            {/* Existing motion elements */}
+            <motion.div
+              style={{
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                backgroundColor: '#7700ff',
+                opacity: 0.2,
+                borderRadius: '0 0 40px 40px',
+              }}
+              animate={{
+                height: unlockProgress.get() + '%',
+              }}
+            />
+            <motion.div
+              style={{
+                width: 30,
+                height: 60,
+                borderRadius: 15,
+                position: 'absolute',
+                left: '50%',
+                top: '50%',
+                x: '-50%',
+                y: ySpring,
+                scale,
+                background,
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+              }}
+              animate={isUnlocked ? { rotate: 360 } : { rotate: 0 }}
+              transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+            />
+          </div>
+        </div>
+
+        {/* Instructions */}
+        <motion.div 
+          className="text-center text-sm font-medium text-blue-600 dark:text-blue-400"
+          animate={{
+            opacity: [0.5, 1, 0.5],
+            y: [0, -5, 0],
+          }}
+          transition={{
+            duration: 2,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        >
+          {!isUnlocked ? 'Lift head to begin' : 
+           waitingForPlayGesture ? 'Nod to continue' : 
            'Processing...'}
-        </span>
-      </div>
-      <motion.div
-        style={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          backgroundColor: '#7700ff',
-          opacity: 0.2,
-          borderRadius: '0 0 40px 40px',
-        }}
-        animate={{
-          height: unlockProgress.get() + '%',
-        }}
-      />
-      <motion.div
-        style={{
-          width: 30,
-          height: 60,
-          borderRadius: 15,
-          position: 'absolute',
-          left: '50%',
-          top: '50%',
-          x: '-50%',
-          y: ySpring,
-          scale,
-          background,
-          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-        }}
-        animate={isUnlocked ? { rotate: 360 } : { rotate: 0 }}
-        transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-      />
-      {/* <p className="mt-4">Status: {status}</p>
-      <p>Pitch: {pitch?.toFixed(2)}</p>
-      <p>Unlocked: {isUnlocked ? 'Yes' : 'No'}</p>
-      <p>Head Detected: {status === 'detected' ? 'Yes' : 'No'}</p> */}
-      
-      {/* Hidden video and canvas elements required for head pose detection */}
-      <video
-        ref={videoRef}
-        style={{ display: 'none' }}
-        width="640"
-        height="480"
-      ></video>
-      <canvas
-        ref={canvasRef}
-        style={{ display: 'none' }}
-        width="640"
-        height="480"
-      ></canvas>
-    </div>
+        </motion.div>
+
+        {/* Hidden video elements */}
+        <video ref={videoRef} style={{ display: 'none' }} width="640" height="480" />
+        <canvas ref={canvasRef} style={{ display: 'none' }} width="640" height="480" />
+      </motion.div>
+    </motion.div>
   );
 };
 
@@ -150,6 +185,7 @@ HeadPoseControl.propTypes = {
   onPlay: PropTypes.func.isRequired,
   isPlaying: PropTypes.bool.isRequired,
   onHeadDetectionChange: PropTypes.func.isRequired,
+  onClose: PropTypes.func.isRequired,
 };
 
 export default HeadPoseControl;
