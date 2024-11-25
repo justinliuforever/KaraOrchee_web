@@ -9,6 +9,7 @@ const AudioPlayerWithCV = () => {
   const [isHeadDetected, setIsHeadDetected] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [musicData, setMusicData] = useState(null);
 
   const handleUnlock = () => {
     console.log('Unlocked');
@@ -48,12 +49,29 @@ const AudioPlayerWithCV = () => {
     };
   }, []);
 
+  useEffect(() => {
+    // Fetch music data when component mounts
+    const fetchMusicData = async () => {
+      try {
+        const response = await fetch('http://localhost:5555/music/67394319ae95c7ce27178990');
+        const data = await response.json();
+        setMusicData(data);
+      } catch (error) {
+        console.error('Error fetching music data:', error);
+      }
+    };
+
+    fetchMusicData();
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100">
-      <h1 className="text-4xl font-bold mb-8">Audio Player with CV Control</h1>
+      <h1 className="text-4xl font-bold mb-8">
+        {musicData ? musicData.title : 'Loading...'}
+      </h1>
       <audio
         ref={audioRef}
-        src="https://firebasestorage.googleapis.com/v0/b/musicinformaudiostream.appspot.com/o/audios%2F1712787441931_i-allegronontroppemoltomaestoso-backing.mp3?alt=media&token=d9d3333e-b90a-4a43-982e-23ce1318882b"
+        src={musicData?.soundTracks[0]?.wav || ''}
         onEnded={handlePause}
         onPause={handlePause}
         className="hidden"
@@ -77,6 +95,7 @@ const AudioPlayerWithCV = () => {
         onPause={handlePause}
         currentTime={currentTime}
         duration={duration}
+        musicData={musicData}
       />
     </div>
   );

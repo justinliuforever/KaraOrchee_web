@@ -9,7 +9,7 @@ const buttonAnimations = {
   tap: { scale: 0.9 },
 };
 
-const AudioControlBar = ({ audioRef, isPlaying, onPlay, onPause, currentTime, duration }) => {
+const AudioControlBar = ({ audioRef, isPlaying, onPlay, onPause, currentTime, duration, musicData }) => {
   const [progress, setProgress] = useState(0);
   const controls = useAnimation();
 
@@ -51,15 +51,19 @@ const AudioControlBar = ({ audioRef, isPlaying, onPlay, onPause, currentTime, du
         {/* Song information section */}
         <div className="flex items-center space-x-4 mb-4">
           <motion.img 
-            src="https://via.placeholder.com/48" 
+            src={musicData?.coverImageUrl || "https://via.placeholder.com/48"}
             alt="Album cover" 
             className="w-12 h-12 rounded-lg"
             whileHover={{ scale: 1.1 }}
             transition={{ type: 'spring', stiffness: 300, damping: 10 }}
           />
           <div className="flex-grow">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Song Title</h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Artist Name</p>
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+              {musicData?.title || 'Loading...'}
+            </h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              {musicData?.composerFullName || 'Unknown Artist'}
+            </p>
           </div>
         </div>
         {/* Progress bar section */}
@@ -136,6 +140,7 @@ AudioControlBar.propTypes = {
   onPause: PropTypes.func.isRequired,
   currentTime: PropTypes.number.isRequired,
   duration: PropTypes.number.isRequired,
+  musicData: PropTypes.object,
 };
 
 export default AudioControlBar;
