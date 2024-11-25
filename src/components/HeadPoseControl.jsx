@@ -24,6 +24,7 @@ const COLOR_RANGE = ["#ff008c", "#7700ff", "rgb(230, 255, 0)"];
 const HeadPoseControl = ({ onUnlock, onPlay, isPlaying, onHeadDetectionChange }) => {
   const { videoRef, canvasRef, status, pitch } = useHeadPoseDetection();
   const [isUnlocked, setIsUnlocked] = React.useState(false);
+  const [waitingForPlayGesture, setWaitingForPlayGesture] = React.useState(false);
 
   const y = useMotionValue(0);
   const ySpring = useSpring(y, { stiffness: 300, damping: 30 });
@@ -43,25 +44,28 @@ const HeadPoseControl = ({ onUnlock, onPlay, isPlaying, onHeadDetectionChange })
   useEffect(() => {
     if (pitch !== null) {
       y.set(-pitch * 5);
-    }
-  }, [pitch, y]);
 
-  useEffect(() => {
-    if (pitch !== null) {
+      // Step 1: Check for unlock gesture (head up)
       if (pitch >= UNLOCK_THRESHOLD && !isUnlocked) {
         setIsUnlocked(true);
+        setWaitingForPlayGesture(true);
         onUnlock();
-      } else if (pitch < PLAY_THRESHOLD && isUnlocked && !isPlaying) {
+      } 
+      // Step 2: Check for play gesture (head down) after unlock
+      else if (pitch < PLAY_THRESHOLD && isUnlocked && waitingForPlayGesture) {
+        setWaitingForPlayGesture(false);
         onPlay();
       }
     }
-  }, [pitch, isUnlocked, onUnlock, onPlay, isPlaying]);
+  }, [pitch, isUnlocked, waitingForPlayGesture, onUnlock, onPlay]);
 
+  // Reset states when not in use
   useEffect(() => {
     if (!isPlaying) {
-      resetUnlocked();
+      setIsUnlocked(false);
+      setWaitingForPlayGesture(false);
     }
-  }, [isPlaying, resetUnlocked]);
+  }, [isPlaying]);
 
   useEffect(() => {
     onHeadDetectionChange(status === 'detected');
@@ -81,6 +85,13 @@ const HeadPoseControl = ({ onUnlock, onPlay, isPlaying, onHeadDetectionChange })
       justifyContent: 'center',
       alignItems: 'center',
     }}>
+      <div className="absolute top-4 left-0 right-0 text-center">
+        <span className="text-xs font-medium text-blue-500">
+          {!isUnlocked ? 'Lift head to unlock' : 
+           waitingForPlayGesture ? 'Nod to skip cadenza' : 
+           'Processing...'}
+        </span>
+      </div>
       <motion.div
         style={{
           position: 'absolute',

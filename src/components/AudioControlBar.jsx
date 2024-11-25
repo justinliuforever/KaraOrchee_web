@@ -9,7 +9,16 @@ const buttonAnimations = {
   tap: { scale: 0.9 },
 };
 
-const AudioControlBar = ({ audioRef, isPlaying, onPlay, onPause, currentTime, duration, musicData }) => {
+const AudioControlBar = ({ 
+  audioRef, 
+  isPlaying, 
+  onPlay, 
+  onPause, 
+  currentTime, 
+  duration, 
+  musicData,
+  timeStringToSeconds 
+}) => {
   const [progress, setProgress] = useState(0);
   const controls = useAnimation();
 
@@ -40,6 +49,29 @@ const AudioControlBar = ({ audioRef, isPlaying, onPlay, onPause, currentTime, du
   // Common button styles
   const buttonStyles = "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white";
 
+  // Add visualization for cadenza sections in progress bar
+  const renderCadenzaMarkers = () => {
+    if (!musicData?.cadenzaTimeFrames) return null;
+
+    return musicData.cadenzaTimeFrames.map((cadenza, index) => {
+      const startPercent = (timeStringToSeconds(cadenza.beginning) / duration) * 100;
+      const endPercent = (timeStringToSeconds(cadenza.ending) / duration) * 100;
+      const width = endPercent - startPercent;
+
+      return (
+        <motion.div
+          key={index}
+          className="absolute h-full bg-blue-300 dark:bg-blue-600 opacity-40"
+          style={{
+            left: `${startPercent}%`,
+            width: `${width}%`,
+          }}
+          whileHover={{ opacity: 0.6 }}
+        />
+      );
+    });
+  };
+
   return (
     <motion.div 
       className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 shadow-lg"
@@ -66,13 +98,14 @@ const AudioControlBar = ({ audioRef, isPlaying, onPlay, onPause, currentTime, du
             </p>
           </div>
         </div>
-        {/* Progress bar section */}
+        {/* Progress bar section with cadenza markers */}
         <div className="mb-2">
           <div 
-            className="bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden cursor-pointer" 
+            className="bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden cursor-pointer relative" 
             onClick={handleSeek}
-            style={{ position: 'relative', height: '8px' }}
+            style={{ height: '8px' }}
           >
+            {renderCadenzaMarkers()}
             <motion.div
               className="h-full bg-blue-500"
               style={{ width: `${progress}%` }}
@@ -141,6 +174,7 @@ AudioControlBar.propTypes = {
   currentTime: PropTypes.number.isRequired,
   duration: PropTypes.number.isRequired,
   musicData: PropTypes.object,
+  timeStringToSeconds: PropTypes.func.isRequired,
 };
 
 export default AudioControlBar;
