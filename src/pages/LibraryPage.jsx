@@ -2,8 +2,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 // LibraryPage.js
 import { useEffect, useState } from 'react';
 
-import MusicCard from '../components/MusicCard';
-import SearchBar from '../components/SearchBar';
+import MusicCard from '../components/MusicLibraryComponent/MusicCard';
+import SearchBar from '../components/MusicLibraryComponent/SearchBar';
 import axios from 'axios';
 import config from '../config';
 
