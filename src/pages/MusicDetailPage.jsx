@@ -4,8 +4,10 @@ import { useEffect, useRef, useState } from 'react';
 import AudioControlBar from '../components/AudioControlBar';
 import HeadPoseControl from '../components/HeadPoseControl';
 import LoadingScreen from '../components/LoadingScreen';
+import config from '../config';
+import { useParams } from 'react-router-dom';
 
-const AudioPlayerWithCV = () => {
+const MusicDetailPage = () => {
   // 1. All useRef hooks
   const audioRef = useRef(null);
 
@@ -20,6 +22,7 @@ const AudioPlayerWithCV = () => {
   const [musicData, setMusicData] = useState(null);
   const [activeCadenza, setActiveCadenza] = useState(null);
   const [isInCadenza, setIsInCadenza] = useState(false);
+  const { id } = useParams();
 
   // 3. Helper functions (defined before useEffect)
   const timeStringToSeconds = (timeStr) => {
@@ -82,7 +85,7 @@ const AudioPlayerWithCV = () => {
         // Step 1: Fetch music data
         setLoadingStatus('Fetching music data...');
         setLoadingProgress(20);
-        const response = await fetch('http://localhost:5555/music/67394319ae95c7ce27178990');
+        const response = await fetch(`${config.apiUrl}/${id}`);
         const data = await response.json();
         
         // Step 2: Preload cover image
@@ -127,7 +130,7 @@ const AudioPlayerWithCV = () => {
     };
 
     loadResources();
-  }, []);
+  }, [id]);
 
   // Audio time update effect
   useEffect(() => {
@@ -326,4 +329,4 @@ const AudioPlayerWithCV = () => {
   );
 };
 
-export default AudioPlayerWithCV;
+export default MusicDetailPage;
