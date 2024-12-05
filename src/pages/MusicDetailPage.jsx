@@ -5,6 +5,7 @@ import AudioControlBar from '../components/AudioControlBar';
 import HeadPoseControl from '../components/HeadPoseControl';
 import LoadingScreen from '../components/LoadingScreen';
 import config from '../config';
+import { useAudioRecorder } from '../hooks/useAudioRecorder';
 import { useParams } from 'react-router-dom';
 
 const MusicDetailPage = () => {
@@ -23,6 +24,13 @@ const MusicDetailPage = () => {
   const [activeCadenza, setActiveCadenza] = useState(null);
   const [isInCadenza, setIsInCadenza] = useState(false);
   const { id } = useParams();
+  const {
+    isRecording,
+    recordedAudio,
+    startRecording,
+    stopRecording,
+    clearRecording
+  } = useAudioRecorder();
 
   // 3. Helper functions (defined before useEffect)
   const timeStringToSeconds = (timeStr) => {
@@ -111,7 +119,7 @@ const MusicDetailPage = () => {
               resolve();
             }, { once: true });
             audio.addEventListener('error', reject, { once: true });
-            audio.load(); // 确保开始加载音频
+            audio.load(); // 确保开始载音频
           });
         }
 
@@ -299,6 +307,8 @@ const MusicDetailPage = () => {
                 isPlaying={isPlaying} 
                 onHeadDetectionChange={handleHeadDetectionChange}
                 onClose={handleCloseHeadPose}
+                startRecording={startRecording}
+                stopRecording={stopRecording}
               />
             )}
           </AnimatePresence>
@@ -324,6 +334,26 @@ const MusicDetailPage = () => {
           musicData={musicData}
           timeStringToSeconds={timeStringToSeconds}
         />
+
+        {/* Display Recorded Audio */}
+        {recordedAudio && (
+          <div className="mb-8">
+            <div className="flex justify-center gap-4">
+              <motion.button
+                onClick={clearRecording}
+                className="px-6 py-3 rounded-lg font-medium bg-gray-500 hover:bg-gray-600 text-white transition-colors"
+                whileTap={{ scale: 0.95 }}
+              >
+                Clear Recording
+              </motion.button>
+              <audio
+                src={recordedAudio}
+                controls
+                className="rounded-lg bg-white/10 backdrop-blur-sm"
+              />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -21,8 +21,8 @@ const PROGRESS_RANGE = [-75, -15];
 const COLOR_RANGE = ["#ff008c", "#7700ff", "rgb(230, 255, 0)"];
 
 
-const HeadPoseControl = ({ onUnlock, onPlay, isPlaying, onHeadDetectionChange, onClose }) => {
-  const { videoRef, canvasRef, status, pitch } = useHeadPoseDetection();
+const HeadPoseControl = ({ onUnlock, onPlay, isPlaying, onHeadDetectionChange, onClose, startRecording, stopRecording }) => {
+  const { videoRef, canvasRef, status, pitch, mediaStream } = useHeadPoseDetection();
   const [isUnlocked, setIsUnlocked] = React.useState(false);
   const [waitingForPlayGesture, setWaitingForPlayGesture] = React.useState(false);
 
@@ -70,6 +70,19 @@ const HeadPoseControl = ({ onUnlock, onPlay, isPlaying, onHeadDetectionChange, o
   useEffect(() => {
     onHeadDetectionChange(status === 'detected');
   }, [status, onHeadDetectionChange]);
+
+  // Start recording when mediaStream is available
+  useEffect(() => {
+    if (startRecording && mediaStream) {
+      startRecording(mediaStream); // Pass mediaStream to startRecording
+    }
+
+    return () => {
+      if (stopRecording) {
+        stopRecording();
+      }
+    };
+  }, [startRecording, stopRecording, mediaStream]);
 
   return (
     <motion.div
@@ -186,6 +199,8 @@ HeadPoseControl.propTypes = {
   isPlaying: PropTypes.bool.isRequired,
   onHeadDetectionChange: PropTypes.func.isRequired,
   onClose: PropTypes.func.isRequired,
+  startRecording: PropTypes.func.isRequired,
+  stopRecording: PropTypes.func.isRequired,
 };
 
 export default HeadPoseControl;

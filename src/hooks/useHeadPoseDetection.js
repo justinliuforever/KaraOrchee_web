@@ -5,11 +5,12 @@ import config from '../config';
 const useHeadPoseDetection = () => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
+  const wsRef = useRef(null);
   const [status, setStatus] = useState('initializing');
   const [pitch, setPitch] = useState(null);
   const [yaw, setYaw] = useState(null);
   const [roll, setRoll] = useState(null);
-  const [ws, setWs] = useState(null);
+  const [mediaStream, setMediaStream] = useState(null);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -17,9 +18,10 @@ const useHeadPoseDetection = () => {
     const context = canvas.getContext('2d');
 
     const startVideo = () => {
-      navigator.mediaDevices.getUserMedia({ video: true })
+      navigator.mediaDevices.getUserMedia({ video: true, audio: true })
         .then(stream => {
           video.srcObject = stream;
+          setMediaStream(stream);
           video.addEventListener('loadeddata', () => {
             video.play().catch(error => {
               console.error("Error playing video: ", error);
@@ -27,14 +29,14 @@ const useHeadPoseDetection = () => {
           });
         })
         .catch(err => {
-          console.error("Error accessing webcam: ", err);
+          console.error("Error accessing webcam and microphone: ", err);
         });
     };
 
     startVideo();
 
     const sendFrame = () => {
-      if (ws && ws.readyState === WebSocket.OPEN) {
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
         canvas.toBlob(blob => {
           if (blob) {
@@ -43,7 +45,7 @@ const useHeadPoseDetection = () => {
               const arrayBuffer = reader.result;
               const bytes = new Uint8Array(arrayBuffer);
               const hexString = Array.from(bytes).map(byte => byte.toString(16).padStart(2, '0')).join('');
-              ws.send(JSON.stringify({ frame: hexString }));
+              wsRef.current.send(JSON.stringify({ frame: hexString }));
             };
             reader.readAsArrayBuffer(blob);
           }
@@ -51,68 +53,53 @@ const useHeadPoseDetection = () => {
       }
     };
 
-    const interval = setInterval(sendFrame, 150); // Adjust the interval as needed
+    const interval = setInterval(sendFrame, 150);
 
     return () => {
       clearInterval(interval);
-      if (ws) {
-        ws.close();
+      if (wsRef.current) {
+        wsRef.current.close();
       }
-    };
-  }, [ws]);
-
-  useEffect(() => {
-    const connectWebSocket = () => {
-      const websocket = new WebSocket(`${config.ws}/head-pose`);
-      websocket.binaryType = 'arraybuffer';
-
-      websocket.onopen = () => {
-        console.log('WebSocket connection established');
-      };
-
-      websocket.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        setStatus(data.pitch !== null ? 'detected' : 'no face');
-        setPitch(data.pitch);
-        setYaw(data.yaw);
-        setRoll(data.roll);
-
-        const frameHex = data.frame;
-        const frameBuffer = new Uint8Array(frameHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
-        const blob = new Blob([frameBuffer], { type: 'image/jpeg' });
-        const url = URL.createObjectURL(blob);
-        const img = new Image();
-        img.onload = () => {
-          const canvas = canvasRef.current;
-          const context = canvas.getContext('2d');
-          context.clearRect(0, 0, canvas.width, canvas.height);
-          context.drawImage(img, 0, 0, canvas.width, canvas.height);
-          URL.revokeObjectURL(url);
-        };
-        img.src = url;
-      };
-
-      websocket.onclose = () => {
-        console.log('WebSocket connection closed');
-      };
-
-      websocket.onerror = (error) => {
-        console.error('WebSocket error:', error);
-      };
-
-      setWs(websocket);
-    };
-
-    connectWebSocket();
-
-    return () => {
-      if (ws) {
-        ws.close();
+      if (mediaStream) {
+        mediaStream.getTracks().forEach(track => track.stop());
       }
     };
   }, []);
 
-  return { videoRef, canvasRef, status, pitch, yaw, roll };
+  useEffect(() => {
+    const websocket = new WebSocket(`${config.ws}/head-pose`);
+    websocket.binaryType = 'arraybuffer';
+
+    websocket.onopen = () => {
+      console.log('WebSocket connection established');
+    };
+
+    websocket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      setStatus(data.pitch !== null ? 'detected' : 'no face');
+      setPitch(data.pitch);
+      setYaw(data.yaw);
+      setRoll(data.roll);
+    };
+
+    websocket.onclose = () => {
+      console.log('WebSocket connection closed');
+    };
+
+    websocket.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+
+    wsRef.current = websocket;
+
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+    };
+  }, []);
+
+  return { videoRef, canvasRef, status, pitch, yaw, roll, mediaStream };
 };
 
 export default useHeadPoseDetection;
