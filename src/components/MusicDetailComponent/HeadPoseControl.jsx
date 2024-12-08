@@ -2,7 +2,7 @@ import React, { useCallback, useEffect } from 'react';
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 
 import PropTypes from 'prop-types';
-import useHeadPoseDetection from '../hooks/useHeadPoseDetection';
+import useHeadPoseDetection from '../../hooks/useHeadPoseDetection';
 
 // SETTINGS
 // The pitch angle (in degrees) at which the control unlocks

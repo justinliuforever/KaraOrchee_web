@@ -1,8 +1,8 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 
-import AudioControlBar from '../components/AudioControlBar';
-import HeadPoseControl from '../components/HeadPoseControl';
+import AudioControlBar from '../components/MusicDetailComponent/AudioControlBar';
+import HeadPoseControl from '../components/MusicDetailComponent/HeadPoseControl';
 import LoadingScreen from '../components/LoadingScreen';
 import config from '../config';
 import { useAudioRecorder } from '../hooks/useAudioRecorder';
