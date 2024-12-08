@@ -81,6 +81,7 @@ const MusicDetailPage = () => {
   };
 
   const handleCloseHeadPose = () => {
+    stopRecording();
     setIsInCadenza(false);
     setActiveCadenza(null);
   };

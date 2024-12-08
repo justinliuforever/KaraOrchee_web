@@ -5,19 +5,16 @@ export const useAudioRecorder = () => {
   const [recordedAudio, setRecordedAudio] = useState(null);
   const [audioChunks, setAudioChunks] = useState([]);
   const mediaRecorderRef = useRef(null);
+  const audioStreamRef = useRef(null);
 
-  const startRecording = useCallback((stream) => {
+  const startRecording = useCallback(async () => {
     try {
-      if (!stream) {
-        throw new Error('No media stream provided');
-      }
-
-      const audioTracks = stream.getAudioTracks();
+      const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const audioTracks = audioStream.getAudioTracks();
       if (audioTracks.length === 0) {
         throw new Error('No audio tracks available in the stream.');
       }
 
-      const audioStream = new MediaStream(audioTracks);
       const recorder = new MediaRecorder(audioStream);
       const chunks = [];
 
@@ -27,10 +24,16 @@ export const useAudioRecorder = () => {
         const audioUrl = URL.createObjectURL(blob);
         setRecordedAudio(audioUrl);
         setAudioChunks(chunks);
+
+        if (audioStreamRef.current) {
+          audioStreamRef.current.getTracks().forEach(track => track.stop());
+          audioStreamRef.current = null;
+        }
       };
 
       recorder.start();
       mediaRecorderRef.current = recorder;
+      audioStreamRef.current = audioStream;
       setIsRecording(true);
     } catch (error) {
       console.error('Error starting recording:', error);

@@ -22,9 +22,10 @@ const COLOR_RANGE = ["#ff008c", "#7700ff", "rgb(230, 255, 0)"];
 
 
 const HeadPoseControl = ({ onUnlock, onPlay, isPlaying, onHeadDetectionChange, onClose, startRecording, stopRecording }) => {
-  const { videoRef, canvasRef, status, pitch, mediaStream } = useHeadPoseDetection();
+  const { videoRef, canvasRef, status, pitch } = useHeadPoseDetection();
   const [isUnlocked, setIsUnlocked] = React.useState(false);
   const [waitingForPlayGesture, setWaitingForPlayGesture] = React.useState(false);
+  const [isRecordingStarted, setIsRecordingStarted] = React.useState(false);
 
   const y = useMotionValue(0);
   const ySpring = useSpring(y, { stiffness: 300, damping: 30 });
@@ -41,23 +42,45 @@ const HeadPoseControl = ({ onUnlock, onPlay, isPlaying, onHeadDetectionChange, o
     setIsUnlocked(false);
   }, []);
 
+  // Handle recording state
+  useEffect(() => {
+    if (!isRecordingStarted) {
+      startRecording();
+      setIsRecordingStarted(true);
+    }
+  }, [startRecording, isRecordingStarted]);
+
+  // Handle head pose detection
   useEffect(() => {
     if (pitch !== null) {
+      console.log('Current pitch:', pitch);
       y.set(-pitch * 5);
 
       // Step 1: Check for unlock gesture (head up)
       if (pitch >= UNLOCK_THRESHOLD && !isUnlocked) {
+        console.log('Unlock gesture detected');
         setIsUnlocked(true);
         setWaitingForPlayGesture(true);
         onUnlock();
       } 
       // Step 2: Check for play gesture (head down) after unlock
       else if (pitch < PLAY_THRESHOLD && isUnlocked && waitingForPlayGesture) {
+        console.log('Play gesture detected');
         setWaitingForPlayGesture(false);
+        stopRecording(); // Stop recording when cadenza is complete
         onPlay();
       }
     }
-  }, [pitch, isUnlocked, waitingForPlayGesture, onUnlock, onPlay]);
+  }, [pitch, isUnlocked, waitingForPlayGesture, onUnlock, onPlay, stopRecording, y]);
+
+  // Handle component cleanup
+  useEffect(() => {
+    return () => {
+      if (isRecordingStarted) {
+        stopRecording();
+      }
+    };
+  }, [stopRecording, isRecordingStarted]);
 
   // Reset states when not in use
   useEffect(() => {
@@ -67,22 +90,18 @@ const HeadPoseControl = ({ onUnlock, onPlay, isPlaying, onHeadDetectionChange, o
     }
   }, [isPlaying]);
 
+  // Update head detection status
   useEffect(() => {
     onHeadDetectionChange(status === 'detected');
   }, [status, onHeadDetectionChange]);
 
-  // Start recording when mediaStream is available
-  useEffect(() => {
-    if (startRecording && mediaStream) {
-      startRecording(mediaStream); // Pass mediaStream to startRecording
+  // Handle close
+  const handleClose = () => {
+    if (isRecordingStarted) {
+      stopRecording();
     }
-
-    return () => {
-      if (stopRecording) {
-        stopRecording();
-      }
-    };
-  }, [startRecording, stopRecording, mediaStream]);
+    onClose();
+  };
 
   return (
     <motion.div
@@ -103,7 +122,7 @@ const HeadPoseControl = ({ onUnlock, onPlay, isPlaying, onHeadDetectionChange, o
       >
         {/* Close button */}
         <button
-          onClick={onClose}
+          onClick={handleClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
