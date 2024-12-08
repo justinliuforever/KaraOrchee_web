@@ -120,7 +120,7 @@ const MusicDetailPage = () => {
               resolve();
             }, { once: true });
             audio.addEventListener('error', reject, { once: true });
-            audio.load(); // 确保开始载音频
+            audio.load();
           });
         }
 
@@ -298,6 +298,81 @@ const MusicDetailPage = () => {
           </motion.div>
         )}
 
+        {/* User Recordings Section */}
+        <motion.div 
+          className="mb-24" // Increased bottom margin to avoid overlap with control bar
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8 }}
+        >
+          <h2 className="text-2xl font-serif mb-8 text-blue-200">
+            Your Recordings
+          </h2>
+          
+          <div className="relative rounded-xl backdrop-blur-sm bg-white/5 p-6 space-y-6">
+            {/* Recording Status */}
+            {isRecording && (
+              <motion.div 
+                className="flex items-center gap-4 p-4 rounded-lg bg-red-500/20 border border-red-500/30"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <div className="flex items-center gap-2">
+                  <motion.div 
+                    className="w-3 h-3 rounded-full bg-red-500"
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ duration: 1, repeat: Infinity }}
+                  />
+                  <span className="text-red-200 font-medium">Recording in progress...</span>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Latest Recording */}
+            {recordedAudio ? (
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <motion.div 
+                      className="w-10 h-10 rounded-full bg-blue-500/30 flex items-center justify-center"
+                      whileHover={{ scale: 1.05 }}
+                    >
+                      <i className="fas fa-music text-blue-200" />
+                    </motion.div>
+                    <div>
+                      <h3 className="text-blue-200 font-medium">Latest Recording</h3>
+                      <p className="text-sm text-blue-300/60">
+                        {new Date().toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                  <motion.button
+                    onClick={clearRecording}
+                    className="text-red-300 hover:text-red-200 transition-colors"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <i className="fas fa-trash" />
+                  </motion.button>
+                </div>
+                
+                <div className="relative rounded-lg overflow-hidden bg-white/10 p-3">
+                  <audio
+                    src={recordedAudio}
+                    controls
+                    className="w-full focus:outline-none"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-blue-300/60">
+                <p>No recordings yet</p>
+                <p className="text-sm mt-2">Your recordings will appear here after you complete a cadenza</p>
+              </div>
+            )}
+          </div>
+        </motion.div>
+
         {/* Head Pose Control Section */}
         <div className="flex justify-center mb-12">
           <AnimatePresence>
@@ -335,26 +410,6 @@ const MusicDetailPage = () => {
           musicData={musicData}
           timeStringToSeconds={timeStringToSeconds}
         />
-
-        {/* Display Recorded Audio */}
-        {recordedAudio && (
-          <div className="mb-8">
-            <div className="flex justify-center gap-4">
-              <motion.button
-                onClick={clearRecording}
-                className="px-6 py-3 rounded-lg font-medium bg-gray-500 hover:bg-gray-600 text-white transition-colors"
-                whileTap={{ scale: 0.95 }}
-              >
-                Clear Recording
-              </motion.button>
-              <audio
-                src={recordedAudio}
-                controls
-                className="rounded-lg bg-white/10 backdrop-blur-sm"
-              />
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
