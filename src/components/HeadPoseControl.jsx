@@ -72,8 +72,12 @@ const HeadPoseControl = ({ onUnlock, onPlay, isPlaying, onHeadDetectionChange, o
       else if (pitch < PLAY_THRESHOLD && isUnlocked && waitingForPlayGesture) {
         setWaitingForPlayGesture(false);
         setRecordingStatus('completed');
-        stopRecording();
-        onPlay();
+
+        // Add a 500ms delay before stopping the recording
+        setTimeout(() => {
+          stopRecording();
+          onPlay();
+        }, 400);
       }
     }
   }, [pitch, isUnlocked, waitingForPlayGesture, onUnlock, onPlay, stopRecording, y]);
