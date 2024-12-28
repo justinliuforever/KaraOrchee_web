@@ -5,109 +5,103 @@ import config from '../config';
 const useHeadPoseDetection = () => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
+  const wsRef = useRef(null);
   const [status, setStatus] = useState('initializing');
   const [pitch, setPitch] = useState(null);
   const [yaw, setYaw] = useState(null);
   const [roll, setRoll] = useState(null);
-  const [ws, setWs] = useState(null);
 
   useEffect(() => {
+    let isComponentMounted = true;
     const video = videoRef.current;
     const canvas = canvasRef.current;
     const context = canvas.getContext('2d');
+    let frameInterval;
 
-    const startVideo = () => {
-      navigator.mediaDevices.getUserMedia({ video: true })
-        .then(stream => {
-          video.srcObject = stream;
+    const initialize = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        if (!isComponentMounted) return;
+        
+        video.srcObject = stream;
+        
+        await new Promise((resolve) => {
           video.addEventListener('loadeddata', () => {
-            video.play().catch(error => {
-              console.error("Error playing video: ", error);
-            });
-          });
-        })
-        .catch(err => {
-          console.error("Error accessing webcam: ", err);
+            video.play().catch(console.error);
+            resolve();
+          }, { once: true });
         });
-    };
 
-    startVideo();
+        if (!isComponentMounted) return;
+        
+        const websocket = new WebSocket(`${config.ws}/head-pose`);
+        websocket.binaryType = 'arraybuffer';
 
-    const sendFrame = () => {
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        canvas.toBlob(blob => {
-          if (blob) {
-            const reader = new FileReader();
-            reader.onload = () => {
-              const arrayBuffer = reader.result;
-              const bytes = new Uint8Array(arrayBuffer);
-              const hexString = Array.from(bytes).map(byte => byte.toString(16).padStart(2, '0')).join('');
-              ws.send(JSON.stringify({ frame: hexString }));
-            };
-            reader.readAsArrayBuffer(blob);
+        websocket.onopen = () => {
+          if (!isComponentMounted) {
+            websocket.close();
+            return;
           }
-        }, 'image/jpeg', 0.5);
-      }
-    };
-
-    const interval = setInterval(sendFrame, 150); // Adjust the interval as needed
-
-    return () => {
-      clearInterval(interval);
-      if (ws) {
-        ws.close();
-      }
-    };
-  }, [ws]);
-
-  useEffect(() => {
-    const connectWebSocket = () => {
-      const websocket = new WebSocket(`${config.ws}/head-pose`);
-      websocket.binaryType = 'arraybuffer';
-
-      websocket.onopen = () => {
-        console.log('WebSocket connection established');
-      };
-
-      websocket.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        setStatus(data.pitch !== null ? 'detected' : 'no face');
-        setPitch(data.pitch);
-        setYaw(data.yaw);
-        setRoll(data.roll);
-
-        const frameHex = data.frame;
-        const frameBuffer = new Uint8Array(frameHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
-        const blob = new Blob([frameBuffer], { type: 'image/jpeg' });
-        const url = URL.createObjectURL(blob);
-        const img = new Image();
-        img.onload = () => {
-          const canvas = canvasRef.current;
-          const context = canvas.getContext('2d');
-          context.clearRect(0, 0, canvas.width, canvas.height);
-          context.drawImage(img, 0, 0, canvas.width, canvas.height);
-          URL.revokeObjectURL(url);
+          console.log('WebSocket connection established');
         };
-        img.src = url;
-      };
 
-      websocket.onclose = () => {
-        console.log('WebSocket connection closed');
-      };
+        websocket.onmessage = (event) => {
+          const data = JSON.parse(event.data);
+          setStatus(data.pitch !== null ? 'detected' : 'no face');
+          setPitch(data.pitch);
+          setYaw(data.yaw);
+          setRoll(data.roll);
+        };
 
-      websocket.onerror = (error) => {
-        console.error('WebSocket error:', error);
-      };
+        websocket.onclose = () => {
+          console.log('WebSocket connection closed');
+        };
 
-      setWs(websocket);
+        websocket.onerror = (error) => {
+          console.error('WebSocket error:', error);
+        };
+
+        wsRef.current = websocket;
+
+        const sendFrame = () => {
+          if (wsRef.current?.readyState === WebSocket.OPEN) {
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            canvas.toBlob(blob => {
+              if (blob && isComponentMounted) {
+                const reader = new FileReader();
+                reader.onload = () => {
+                  if (wsRef.current?.readyState === WebSocket.OPEN && isComponentMounted) {
+                    const arrayBuffer = reader.result;
+                    const bytes = new Uint8Array(arrayBuffer);
+                    const hexString = Array.from(bytes)
+                      .map(byte => byte.toString(16).padStart(2, '0'))
+                      .join('');
+                    wsRef.current.send(JSON.stringify({ frame: hexString }));
+                  }
+                };
+                reader.readAsArrayBuffer(blob);
+              }
+            }, 'image/jpeg', 0.5);
+          }
+        };
+
+        frameInterval = setInterval(sendFrame, 150);
+      } catch (err) {
+        console.error("Error initializing:", err);
+      }
     };
 
-    connectWebSocket();
+    initialize();
 
     return () => {
-      if (ws) {
-        ws.close();
+      isComponentMounted = false;
+      clearInterval(frameInterval);
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+      if (video.srcObject) {
+        video.srcObject.getTracks().forEach(track => track.stop());
       }
     };
   }, []);

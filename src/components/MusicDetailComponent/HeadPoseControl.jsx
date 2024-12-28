@@ -2,7 +2,7 @@ import React, { useCallback, useEffect } from 'react';
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 
 import PropTypes from 'prop-types';
-import useHeadPoseDetection from '../hooks/useHeadPoseDetection';
+import useHeadPoseDetection from '../../hooks/useHeadPoseDetection';
 
 // SETTINGS
 // The pitch angle (in degrees) at which the control unlocks
@@ -21,10 +21,12 @@ const PROGRESS_RANGE = [-75, -15];
 const COLOR_RANGE = ["#ff008c", "#7700ff", "rgb(230, 255, 0)"];
 
 
-const HeadPoseControl = ({ onUnlock, onPlay, isPlaying, onHeadDetectionChange, onClose }) => {
+const HeadPoseControl = ({ onUnlock, onPlay, isPlaying, onHeadDetectionChange, onClose, startRecording, stopRecording }) => {
   const { videoRef, canvasRef, status, pitch } = useHeadPoseDetection();
   const [isUnlocked, setIsUnlocked] = React.useState(false);
   const [waitingForPlayGesture, setWaitingForPlayGesture] = React.useState(false);
+  const [isRecordingStarted, setIsRecordingStarted] = React.useState(false);
+  const [recordingStatus, setRecordingStatus] = React.useState('preparing'); // 'preparing' | 'recording' | 'completed'
 
   const y = useMotionValue(0);
   const ySpring = useSpring(y, { stiffness: 300, damping: 30 });
@@ -41,23 +43,53 @@ const HeadPoseControl = ({ onUnlock, onPlay, isPlaying, onHeadDetectionChange, o
     setIsUnlocked(false);
   }, []);
 
+  // Update recording effect
+  useEffect(() => {
+    if (!isRecordingStarted) {
+      const initializeRecording = async () => {
+        setRecordingStatus('preparing');
+        // Add a small delay to ensure everything is ready
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        startRecording();
+        setIsRecordingStarted(true);
+        setRecordingStatus('recording');
+      };
+      
+      initializeRecording();
+    }
+  }, [startRecording, isRecordingStarted]);
+
+  // Update the play gesture handler
   useEffect(() => {
     if (pitch !== null) {
       y.set(-pitch * 5);
 
-      // Step 1: Check for unlock gesture (head up)
       if (pitch >= UNLOCK_THRESHOLD && !isUnlocked) {
         setIsUnlocked(true);
         setWaitingForPlayGesture(true);
         onUnlock();
       } 
-      // Step 2: Check for play gesture (head down) after unlock
       else if (pitch < PLAY_THRESHOLD && isUnlocked && waitingForPlayGesture) {
         setWaitingForPlayGesture(false);
-        onPlay();
+        setRecordingStatus('completed');
+
+        // Add a 500ms delay before stopping the recording
+        setTimeout(() => {
+          stopRecording();
+          onPlay();
+        }, 400);
       }
     }
-  }, [pitch, isUnlocked, waitingForPlayGesture, onUnlock, onPlay]);
+  }, [pitch, isUnlocked, waitingForPlayGesture, onUnlock, onPlay, stopRecording, y]);
+
+  // Handle component cleanup
+  useEffect(() => {
+    return () => {
+      if (isRecordingStarted) {
+        stopRecording();
+      }
+    };
+  }, [stopRecording, isRecordingStarted]);
 
   // Reset states when not in use
   useEffect(() => {
@@ -67,9 +99,18 @@ const HeadPoseControl = ({ onUnlock, onPlay, isPlaying, onHeadDetectionChange, o
     }
   }, [isPlaying]);
 
+  // Update head detection status
   useEffect(() => {
     onHeadDetectionChange(status === 'detected');
   }, [status, onHeadDetectionChange]);
+
+  // Handle close
+  const handleClose = () => {
+    if (isRecordingStarted) {
+      stopRecording();
+    }
+    onClose();
+  };
 
   return (
     <motion.div
@@ -90,7 +131,7 @@ const HeadPoseControl = ({ onUnlock, onPlay, isPlaying, onHeadDetectionChange, o
       >
         {/* Close button */}
         <button
-          onClick={onClose}
+          onClick={handleClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -98,14 +139,51 @@ const HeadPoseControl = ({ onUnlock, onPlay, isPlaying, onHeadDetectionChange, o
           </svg>
         </button>
 
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h2 className="text-2xl font-serif text-gray-900 dark:text-white mb-2">
-            Cadenza Control
-          </h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Use head gestures to control the cadenza section
-          </p>
+        {/* Header with Recording Status */}
+        <div className="flex flex-col gap-6">
+          {/* Recording Status Indicator - Moved to top left */}
+          <motion.div 
+            className="flex items-center"
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+          >
+            {recordingStatus === 'preparing' && (
+              <div className="flex items-center gap-2 text-yellow-500">
+                <motion.div
+                  className="w-2 h-2 rounded-full bg-yellow-500"
+                  animate={{ scale: [1, 1.2, 1] }}
+                  transition={{ duration: 1, repeat: Infinity }}
+                />
+                <span className="text-sm font-medium">Preparing recording...</span>
+              </div>
+            )}
+            {recordingStatus === 'recording' && (
+              <div className="flex items-center gap-2 text-red-500">
+                <motion.div
+                  className="w-2 h-2 rounded-full bg-red-500"
+                  animate={{ scale: [1, 1.2, 1] }}
+                  transition={{ duration: 1, repeat: Infinity }}
+                />
+                <span className="text-sm font-medium">Recording in progress</span>
+              </div>
+            )}
+            {recordingStatus === 'completed' && (
+              <div className="flex items-center gap-2 text-green-500">
+                <motion.div className="w-2 h-2 rounded-full bg-green-500" />
+                <span className="text-sm font-medium">Recording completed</span>
+              </div>
+            )}
+          </motion.div>
+
+          {/* Title Section */}
+          <div className="text-center">
+            <h2 className="text-2xl font-serif text-gray-900 dark:text-white mb-2">
+              Cadenza Control
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Use head gestures to control the cadenza section
+            </p>
+          </div>
         </div>
 
         {/* Head pose visualization */}
@@ -154,12 +232,11 @@ const HeadPoseControl = ({ onUnlock, onPlay, isPlaying, onHeadDetectionChange, o
           </div>
         </div>
 
-        {/* Instructions */}
+        {/* Enhanced Instructions */}
         <motion.div 
-          className="text-center text-sm font-medium text-blue-600 dark:text-blue-400"
+          className="text-center mt-6 space-y-2"
           animate={{
             opacity: [0.5, 1, 0.5],
-            y: [0, -5, 0],
           }}
           transition={{
             duration: 2,
@@ -167,9 +244,14 @@ const HeadPoseControl = ({ onUnlock, onPlay, isPlaying, onHeadDetectionChange, o
             ease: "easeInOut"
           }}
         >
-          {!isUnlocked ? 'Lift head to begin' : 
-           waitingForPlayGesture ? 'Nod to continue' : 
-           'Processing...'}
+          <div className="text-sm font-medium text-blue-600 dark:text-blue-400">
+            {!isUnlocked ? 'Lift head to begin' : 
+             waitingForPlayGesture ? 'Nod to complete recording' : 
+             'Processing...'}
+          </div>
+          <div className="text-xs text-gray-500">
+            {recordingStatus === 'recording' && 'Your performance is being recorded'}
+          </div>
         </motion.div>
 
         {/* Hidden video elements */}
@@ -186,6 +268,8 @@ HeadPoseControl.propTypes = {
   isPlaying: PropTypes.bool.isRequired,
   onHeadDetectionChange: PropTypes.func.isRequired,
   onClose: PropTypes.func.isRequired,
+  startRecording: PropTypes.func.isRequired,
+  stopRecording: PropTypes.func.isRequired,
 };
 
 export default HeadPoseControl;
