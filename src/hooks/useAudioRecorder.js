@@ -15,7 +15,7 @@ export const useAudioRecorder = () => {
   const recordingProgressRef = useRef(0);
   const recordingPlayerRef = useRef(new Audio());
 
-  // 初始化录音播放器的事件监听
+  // Initialize recording player event listeners
   useEffect(() => {
     const player = recordingPlayerRef.current;
     
@@ -37,7 +37,7 @@ export const useAudioRecorder = () => {
     };
   }, []);
 
-  // 将 WAV 编码器相关的辅助函数提前定义
+  // Define WAV encoder helper functions in advance
   const writeString = (view, offset, string) => {
     for (let i = 0; i < string.length; i++){
       view.setUint8(offset + i, string.charCodeAt(i));
@@ -51,7 +51,6 @@ export const useAudioRecorder = () => {
     if (numOfChan === 1) {
       samples = audioBuffer.getChannelData(0);
     } else {
-      // 交错合并前两个通道的数据
       const channel0 = audioBuffer.getChannelData(0);
       const channel1 = audioBuffer.getChannelData(1);
       samples = new Float32Array(channel0.length + channel1.length);
@@ -93,30 +92,29 @@ export const useAudioRecorder = () => {
     }
 
     try {
-      // 直接使用 Blob 数组（chunks 内部已是 Blob 对象）
       const originalBlob = new Blob(previousSegments[0].chunks, { type: 'audio/wav' });
       const newBlob = new Blob(retakeSegment.chunks, { type: 'audio/wav' });
 
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       const audioContext = new AudioContext();
 
-      // 解码两个 Blob 得到 AudioBuffer
+      // decode Blob get AudioBuffer
       const originalBuffer = await audioContext.decodeAudioData(await originalBlob.arrayBuffer());
       const newBuffer = await audioContext.decodeAudioData(await newBlob.arrayBuffer());
 
       const sampleRate = originalBuffer.sampleRate;
-      // 计算原始录音中保留的采样点（0 到 retakePoint）
+      // calculate the sample points to keep in the original recording (0 to retakePoint)
       const cutoffSample = Math.floor(Math.min(retakePoint, originalBuffer.duration) * sampleRate);
       const numChannels = originalBuffer.numberOfChannels;
 
-      // 创建新 AudioBuffer: 原始部分 + 重录录音整段
+      // create new AudioBuffer: original part + retake recording whole
       const totalLength = cutoffSample + newBuffer.length;
       const mergedBuffer = audioContext.createBuffer(numChannels, totalLength, sampleRate);
 
       for (let channel = 0; channel < numChannels; channel++) {
         const originalData = originalBuffer.getChannelData(channel);
         const mergedData = mergedBuffer.getChannelData(channel);
-        // 使用 subarray 和 set 实现高效复制
+        // use subarray and set to implement efficient copy
         mergedData.set(originalData.subarray(0, cutoffSample));
         const newData = newBuffer.getChannelData(channel);
         mergedData.set(newData, cutoffSample);
@@ -130,7 +128,7 @@ export const useAudioRecorder = () => {
         {
           startTime: 0,
           endTime: mergedBuffer.duration,
-          chunks: [], // 合并后的 Blob 通过 URL 得到录音
+          chunks: [], // the merged Blob get the recording by URL
           url: audioUrl,
         },
       ]);
@@ -140,7 +138,7 @@ export const useAudioRecorder = () => {
         recordingPlayerRef.current.load();
       }
 
-      // 清理重录相关状态
+      // clean up retake related states
       setRetakePoint(null);
       setPreviousSegments([]);
     } catch (error) {
@@ -150,46 +148,88 @@ export const useAudioRecorder = () => {
 
   const startRecording = useCallback(async (startTime = 0) => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      audioStreamRef.current = stream;
-      
-      const recorder = new MediaRecorder(stream);
-      const chunks = [];
+      // Use raw microphone input, disable echo cancellation, noise suppression and auto gain control
+      // to avoid algorithm interference causing recording distortion when playing background music
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: false,
+          channelCount: 1,
+          sampleRate: 48000,
+          latency: 0,
+        }
+      });
 
-      // 直接存储 Blob 数据，无需额外元信息
+      // Create AudioContext to process audio stream, note this is only used for collection, not connected to output
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const source = audioContext.createMediaStreamSource(stream);
+      // Add a gain node to control recording level (if needed, gain value can be fine-tuned)
+      const gainNode = audioContext.createGain();
+      gainNode.gain.value = 1.0;
+      source.connect(gainNode);
+      
+      // Record audio with higher bitrate
+      const recorder = new MediaRecorder(stream, {
+        mimeType: 'audio/webm;codecs=opus',
+        audioBitsPerSecond: 256000
+      });
+      
+      const chunks = [];
       recorder.ondataavailable = (e) => {
         if (e.data.size > 0) {
           chunks.push(e.data);
         }
       };
 
+      // When recording stops, first decode the recording data, then generate a higher quality PCM format file through encodeWAV
       recorder.onstop = () => {
-        const blob = new Blob(chunks, { type: 'audio/wav' });
-        const audioUrl = URL.createObjectURL(blob);
-        
-        const newSegment = {
-          startTime: startTime,
-          endTime: recordingProgressRef.current,
-          chunks: chunks,
-          url: audioUrl
-        };
+        (async () => {
+          try {
+            const mimeType = recorder.mimeType || 'audio/webm;codecs=opus';
+            const blob = new Blob(chunks, { type: mimeType });
+            const arrayBuffer = await blob.arrayBuffer();
+            const tempAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const decodedBuffer = await tempAudioContext.decodeAudioData(arrayBuffer);
+            // use the predefined encodeWAV function to generate WAV Blob
+            const wavBlob = encodeWAV(decodedBuffer);
+            const audioUrl = URL.createObjectURL(wavBlob);
 
-        if (retakePoint !== null) {
-          mergeRecordings(newSegment);
-        } else {
-          setRecordedAudio(audioUrl);
-          setRecordedSegments([newSegment]);
-          if (recordingPlayerRef.current) {
-            recordingPlayerRef.current.src = audioUrl;
-            recordingPlayerRef.current.load();
+            const newSegment = {
+              startTime: startTime,
+              endTime: recordingProgressRef.current,
+              chunks: chunks,
+              url: audioUrl,
+            };
+
+            if (retakePoint !== null) {
+              mergeRecordings(newSegment);
+            } else {
+              setRecordedAudio(audioUrl);
+              setRecordedSegments([newSegment]);
+              if (recordingPlayerRef.current) {
+                recordingPlayerRef.current.src = audioUrl;
+                recordingPlayerRef.current.load();
+              }
+            }
+          } catch (err) {
+            console.error("Error processing recorded audio:", err);
           }
-        }
+        })();
       };
 
       mediaRecorderRef.current = recorder;
       recordingProgressRef.current = startTime;
       setIsRecording(true);
       recorder.start();
+
+      // Save audio resource reference for later cleanup
+      audioStreamRef.current = {
+        stream,
+        audioContext,
+        source,
+        gainNode
+      };
     } catch (error) {
       console.error('Error starting recording:', error);
     }
@@ -198,10 +238,25 @@ export const useAudioRecorder = () => {
   const stopRecording = useCallback(() => {
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
+      
+      // Clean up audio processing resources
       if (audioStreamRef.current) {
-        audioStreamRef.current.getTracks().forEach(track => track.stop());
+        const { stream, audioContext, source, gainNode } = audioStreamRef.current;
+        
+        // Disconnect audio nodes
+        gainNode?.disconnect();
+        source?.disconnect();
+        
+        // Close audio context
+        audioContext?.close();
+        
+        // Stop all tracks
+        stream.getTracks().forEach(track => track.stop());
+        
+        // Clear reference
+        audioStreamRef.current = null;
       }
-      // 这里直接设置为 false，方便 UI 立即更新（onstop 内不再重复更新）
+      
       setIsRecording(false);
     }
   }, [isRecording]);
@@ -250,7 +305,7 @@ export const useAudioRecorder = () => {
     const [minutes, seconds] = point.time.split(':').map(Number);
     const retakeTime = minutes * 60 + seconds;
 
-    // 保存当前录音片段，并记录重录起始点
+    // save the current recording segment, and record the retake start point
     setPreviousSegments(recordedSegments);
     setRetakePoint(retakeTime);
   }, [recordedSegments]);

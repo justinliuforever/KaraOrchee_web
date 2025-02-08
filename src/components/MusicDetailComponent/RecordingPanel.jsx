@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import PropTypes from 'prop-types';
 import React from 'react';
 
-// 将 PlayPauseIcon 组件移到外部
+// Move PlayPauseIcon component outside
 const PlayPauseIcon = ({ isPlaying }) => (
   <svg className="w-5 h-5 text-green-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
     {isPlaying ? (
@@ -59,7 +59,7 @@ const RecordingPanel = ({
                 exit={{ opacity: 0 }}
                 className="space-y-4"
               >
-                {/* 录音状态 */}
+                {/* Recording Status */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <motion.div
@@ -72,7 +72,7 @@ const RecordingPanel = ({
                   <span className="text-white/60 font-mono">{formatTime(currentTime)}</span>
                 </div>
 
-                {/* 停止录音按钮 */}
+                {/* Stop Recording Button */}
                 <motion.button
                   onClick={onStopRecording}
                   className="w-full py-3 rounded-lg bg-red-500 text-white font-medium"
@@ -90,7 +90,7 @@ const RecordingPanel = ({
                 exit={{ opacity: 0 }}
                 className="space-y-6"
               >
-                {/* 播放控制 */}
+                {/* Playback Controls */}
                 <div className="flex items-center justify-between">
                   <motion.button
                     onClick={isPlayingRecording ? onPauseRecording : onPlayRecording}
@@ -106,7 +106,7 @@ const RecordingPanel = ({
                   <span className="text-white/60 font-mono">{formatTime(currentTime)}</span>
                 </div>
 
-                {/* 重录点选择 */}
+                {/* Rehearsal Point Selection */}
                 <div className="space-y-3">
                   <h3 className="text-sm font-medium text-white/80">
                     Re-record from a specific point
@@ -131,7 +131,7 @@ const RecordingPanel = ({
                   </div>
                 </div>
 
-                {/* 操作按钮 */}
+                {/* Action Buttons */}
                 <div className="flex space-x-3">
                   <motion.button
                     onClick={onStartRecording}
