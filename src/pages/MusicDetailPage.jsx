@@ -1,105 +1,268 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import AudioControlBar from '../components/MusicDetailComponent/AudioControlBar';
 import HeadPoseControl from '../components/MusicDetailComponent/HeadPoseControl';
 import LoadingScreen from '../components/LoadingScreen';
+import RecordingPanel from '../components/MusicDetailComponent/RecordingPanel';
 import config from '../config';
 import { useAudioRecorder } from '../hooks/useAudioRecorder';
 import { useParams } from 'react-router-dom';
 
 const MusicDetailPage = () => {
-  // 1. All useRef hooks
+  // Refs
   const audioRef = useRef(null);
 
-  // 2. All useState hooks
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadingProgress, setLoadingProgress] = useState(0);
-  const [loadingStatus, setLoadingStatus] = useState('Initializing...');
+  // Consolidated loading state for better management
+  const [loading, setLoading] = useState({
+    isLoading: true,
+    progress: 0,
+    status: 'Initializing...',
+  });
+
+  // Audio player state
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isHeadDetected, setIsHeadDetected] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+
+  // Other local states
+  const [isHeadDetected, setIsHeadDetected] = useState(false);
   const [musicData, setMusicData] = useState(null);
   const [activeCadenza, setActiveCadenza] = useState(null);
   const [isInCadenza, setIsInCadenza] = useState(false);
   const { id } = useParams();
+  const [isRecordingMode, setIsRecordingMode] = useState(false);
+  const [currentRehearsalPoint, setCurrentRehearsalPoint] = useState(null);
+
+  // Audio Recorder hook usage
   const {
     isRecording,
     recordedAudio,
+    recordedSegments,
+    recordingProgress,
+    isPlayingRecording,
+    recordingPlaybackTime,
+    recordingPlayerRef,
     startRecording,
     stopRecording,
-    clearRecording
+    clearRecording,
+    seekRecordingPlayback,
+    playRecording,
+    pauseRecording,
+    updateRecordingProgress,
+    startRetake,
+    mergeRecordings,
   } = useAudioRecorder();
 
-  // 3. Helper functions (defined before useEffect)
-  const timeStringToSeconds = (timeStr) => {
+  // Helper function: Convert time string to seconds.
+  const timeStringToSeconds = useCallback((timeStr) => {
     if (!timeStr) return 0;
-    const [minutes, seconds] = timeStr.split("'").map(part => parseFloat(part.replace("'", "")));
+    // Handle the "minutes'seconds''" format (e.g., "11'51''")
+    if (timeStr.includes("'")) {
+      const [minutes, seconds] = timeStr.split("'").map(
+        (part) => parseInt(part.replace(/"/g, ''), 10) || 0
+      );
+      return minutes * 60 + seconds;
+    }
+    // Handle the "minutes:seconds" format (e.g., "11:51")
+    const [minutes, seconds] = timeStr.split(':').map(Number);
     return minutes * 60 + seconds;
-  };
+  }, []);
 
-  // 4. Event handlers
-  const handlePlay = () => {
-    if (audioRef.current && !isPlaying) {
-      audioRef.current.play();
+  // Event Handlers
+
+  // Play the audio backtrack
+  const handlePlay = useCallback(() => {
+    const audio = audioRef.current;
+    if (audio && !isPlaying) {
+      audio.play();
       setIsPlaying(true);
     }
-  };
+  }, [isPlaying]);
 
-  const handlePause = () => {
-    if (audioRef.current) {
-      audioRef.current.pause();
+  // Pause the audio backtrack
+  const handlePause = useCallback(() => {
+    const audio = audioRef.current;
+    if (audio) {
+      audio.pause();
       setIsPlaying(false);
     }
-  };
+  }, []);
 
-  const handleUnlock = () => {
+  // Called by HeadPoseControl when head is lifted (unlock)
+  const handleUnlock = useCallback(() => {
     console.log('Cadenza unlocked, waiting for play gesture');
-  };
+  }, []);
 
-  const handleHeadDetectionChange = (detected) => {
+  // Update head detection status
+  const handleHeadDetectionChange = useCallback((detected) => {
     setIsHeadDetected(detected);
-  };
+  }, []);
 
-  const handleCadenzaClick = (cadenza) => {
-    if (audioRef.current) {
-      const startTime = timeStringToSeconds(cadenza.beginning);
-      audioRef.current.currentTime = startTime;
-      setActiveCadenza(cadenza);
-      handlePause();
-    }
-  };
+  // Jump to cadenza start time and pause backtrack playback
+  const handleCadenzaClick = useCallback(
+    (cadenza) => {
+      const audio = audioRef.current;
+      if (audio) {
+        const startTime = timeStringToSeconds(cadenza.beginning);
+        console.log('Cadenza start time:', startTime); // Debug log
+        if (isFinite(startTime)) {
+          audio.currentTime = startTime;
+          setActiveCadenza(cadenza);
+          setIsInCadenza(true);
+          handlePause();
+        } else {
+          console.error('Invalid time format:', cadenza.beginning);
+        }
+      }
+    },
+    [handlePause, timeStringToSeconds]
+  );
 
-  const handleCadenzaComplete = () => {
-    if (audioRef.current && activeCadenza) {
+  // Called when the user nods to complete the cadenza interaction.
+  // Skips the cadenza section (with a slight offset) and resumes playback.
+  const handleCadenzaComplete = useCallback(() => {
+    const audio = audioRef.current;
+    if (audio && activeCadenza) {
       const endTime = timeStringToSeconds(activeCadenza.ending);
-      audioRef.current.currentTime = endTime;
-      setActiveCadenza(null);
-      handlePlay();
+      if (isFinite(endTime)) {
+        // Add an offset to ensure we leave the cadenza interval.
+        audio.currentTime = endTime + 0.1;
+        setActiveCadenza(null);
+        setIsInCadenza(false);
+        handlePlay();
+      } else {
+        console.error('Invalid time format:', activeCadenza.ending);
+      }
     }
-  };
+  }, [activeCadenza, handlePlay, timeStringToSeconds]);
 
-  const handleCloseHeadPose = () => {
+  // Called when the head pose control is closed; stops the recording and resets cadenza state.
+  const handleCloseHeadPose = useCallback(() => {
     stopRecording();
     setIsInCadenza(false);
     setActiveCadenza(null);
+  }, [stopRecording]);
+
+  // Toggle between normal mode and recording mode.
+  const handleToggleMode = useCallback(() => {
+    if (isRecording) {
+      handleRecordingStop();
+    }
+    setIsRecordingMode((prev) => !prev);
+  }, [isRecording]);
+
+  // Start recording. If a rehearsal point is selected, seek to that time before recording.
+  const handleRecordingStart = useCallback(() => {
+    if (!isRecordingMode) return;
+    const audio = audioRef.current;
+    if (currentRehearsalPoint) {
+      const time = timeStringToSeconds(currentRehearsalPoint.time);
+      if (audio) {
+        audio.currentTime = time;
+      }
+      startRecording(time);
+    } else {
+      if (audio) {
+        audio.currentTime = 0;
+      }
+      startRecording(0);
+    }
+    handlePlay();
+  }, [currentRehearsalPoint, isRecordingMode, startRecording, handlePlay, timeStringToSeconds]);
+
+  // Stop recording and pause playback.
+  const handleRecordingStop = useCallback(() => {
+    if (!isRecordingMode) return;
+    stopRecording();
+    handlePause();
+  }, [isRecordingMode, stopRecording, handlePause]);
+
+  // In recording mode, toggle play/pause for the recording playback.
+  const handlePlayInRecordingMode = useCallback(() => {
+    if (recordedAudio) {
+      if (isPlayingRecording) {
+        pauseRecording();
+      } else {
+        playRecording();
+      }
+    } else {
+      handleRecordingStart();
+    }
+  }, [recordedAudio, isPlayingRecording, pauseRecording, playRecording, handleRecordingStart]);
+
+  // Seek to a specific time in the backtrack (and update recording progress if necessary).
+  const handleSeek = useCallback(
+    (seekTime) => {
+      const audio = audioRef.current;
+      if (audio) {
+        audio.currentTime = seekTime;
+      }
+      if (isRecording) {
+        updateRecordingProgress(seekTime);
+      }
+      if (isRecordingMode && recordedAudio) {
+        seekRecordingPlayback(seekTime);
+      }
+    },
+    [isRecording, isRecordingMode, recordedAudio, updateRecordingProgress, seekRecordingPlayback]
+  );
+
+  // Handle rehearsal point click.
+  // If already selected, deselect it; otherwise, update current rehearsal point.
+  // In recording mode with an existing recording, start the retake at the selected point.
+  const handleRehearsalClick = useCallback(
+    (point) => {
+      const audio = audioRef.current;
+      if (!point || !audio) return;
+      if (currentRehearsalPoint?.letter === point.letter) {
+        setCurrentRehearsalPoint(null);
+        return;
+      }
+      const time = timeStringToSeconds(point.time);
+      setCurrentRehearsalPoint(point);
+      if (isRecordingMode && recordedAudio) {
+        startRetake(point);
+      } else {
+        audio.currentTime = time;
+        if (!isPlaying) {
+          handlePlay();
+        }
+      }
+    },
+    [currentRehearsalPoint, isRecordingMode, recordedAudio, isPlaying, handlePlay, startRetake, timeStringToSeconds]
+  );
+
+  // Handle completion of retake recording.
+  const handleRetakeComplete = useCallback(() => {
+    handleRecordingStop();
+    mergeRecordings();
+  }, [handleRecordingStop, mergeRecordings]);
+
+  const handleDownloadRecording = () => {
+    if (recordedAudio) {
+      const link = document.createElement('a');
+      link.href = recordedAudio;
+      link.download = `recording-${new Date().toISOString()}.wav`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
   };
 
-  // 5. All useEffect hooks
-  // Resource loading effect
+  // Effects
+
+  // Load resources (music data, cover art, and audio) sequentially.
   useEffect(() => {
     const loadResources = async () => {
       try {
         // Step 1: Fetch music data
-        setLoadingStatus('Fetching music data...');
-        setLoadingProgress(20);
+        setLoading((prev) => ({ ...prev, status: 'Fetching music data...', progress: 20 }));
         const response = await fetch(`${config.apiUrl}/${id}`);
         const data = await response.json();
-        
-        // Step 2: Preload cover image
-        setLoadingStatus('Loading cover art...');
-        setLoadingProgress(40);
+
+        // Step 2: Preload cover art
+        setLoading((prev) => ({ ...prev, status: 'Loading cover art...', progress: 40 }));
         if (data.coverImageUrl) {
           await new Promise((resolve, reject) => {
             const img = new Image();
@@ -110,43 +273,51 @@ const MusicDetailPage = () => {
         }
 
         // Step 3: Preload audio
-        setLoadingStatus('Loading audio...');
-        setLoadingProgress(60);
+        setLoading((prev) => ({ ...prev, status: 'Loading audio...', progress: 60 }));
         if (data.soundTracks?.[0]?.wav) {
           const audio = new Audio(data.soundTracks[0].wav);
           await new Promise((resolve, reject) => {
-            audio.addEventListener('loadeddata', () => {
-              setLoadingProgress(90);
-              resolve();
-            }, { once: true });
+            audio.addEventListener(
+              'loadeddata',
+              () => {
+                setLoading((prev) => ({ ...prev, progress: 90 }));
+                resolve();
+              },
+              { once: true }
+            );
             audio.addEventListener('error', reject, { once: true });
             audio.load();
           });
         }
 
         // Step 4: Initialize audio element
-        setLoadingStatus('Preparing playback...');
-        setLoadingProgress(100);
+        setLoading((prev) => ({ ...prev, status: 'Preparing playback...', progress: 100 }));
         setMusicData(data);
-        
-        // 给音频元素一些时间完全初始化
-        await new Promise(resolve => setTimeout(resolve, 500));
-        setIsLoading(false);
+        // Allow some time for audio element to fully initialize
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        setLoading((prev) => ({ ...prev, isLoading: false }));
       } catch (error) {
         console.error('Error loading resources:', error);
-        setLoadingStatus('Error loading resources. Please try again.');
+        setLoading((prev) => ({ ...prev, status: 'Error loading resources. Please try again.' }));
       }
     };
 
     loadResources();
   }, [id]);
 
-  // Audio time update effect
+  // Update current time and duration based on audio element events.
   useEffect(() => {
     const audio = audioRef.current;
-    if (!audio || isLoading) return;
+    if (!audio || loading.isLoading) return;
 
-    const updateTime = () => setCurrentTime(audio.currentTime);
+    const updateTime = () => {
+      const currentAudioTime = audio.currentTime;
+      setCurrentTime(currentAudioTime);
+      if (isRecording) {
+        updateRecordingProgress(currentAudioTime);
+      }
+    };
+
     const updateDuration = () => setDuration(audio.duration);
 
     audio.addEventListener('timeupdate', updateTime);
@@ -156,27 +327,39 @@ const MusicDetailPage = () => {
       audio.removeEventListener('timeupdate', updateTime);
       audio.removeEventListener('loadedmetadata', updateDuration);
     };
-  }, [isLoading]);
+  }, [loading.isLoading, isRecording, updateRecordingProgress]);
 
-  // Cadenza tracking effect
+  // Track the current cadenza; if in recording mode and within a cadenza interval, pause the backtrack playback.
   useEffect(() => {
-    if (!isLoading && musicData?.cadenzaTimeFrames) {
-      const currentCadenza = musicData.cadenzaTimeFrames.find(cadenza => {
+    if (!loading.isLoading && musicData?.cadenzaTimeFrames) {
+      const currentCadenza = musicData.cadenzaTimeFrames.find((cadenza) => {
         const start = timeStringToSeconds(cadenza.beginning);
         const end = timeStringToSeconds(cadenza.ending);
-        return currentTime >= start && currentTime <= end;
+        return currentTime >= start && currentTime < end;
       });
       setIsInCadenza(!!currentCadenza);
       setActiveCadenza(currentCadenza || null);
-    }
-  }, [currentTime, musicData, isLoading]);
 
-  // 6. Conditional rendering for loading state
-  if (isLoading) {
-    return <LoadingScreen progress={loadingProgress} status={loadingStatus} />;
+      const audio = audioRef.current;
+      if (currentCadenza && isRecordingMode && audio && !audio.paused) {
+        handlePause();
+      }
+    }
+  }, [currentTime, musicData, loading.isLoading, isRecordingMode, handlePause, timeStringToSeconds]);
+
+  // Cleanup on unmount: reset the current rehearsal point.
+  useEffect(() => {
+    return () => {
+      setCurrentRehearsalPoint(null);
+    };
+  }, []);
+
+  // If still loading resources, render a loading screen.
+  if (loading.isLoading) {
+    return <LoadingScreen progress={loading.progress} status={loading.status} />;
   }
 
-  // 7. Main render
+  // Main render
   return (
     <div className="min-h-screen relative bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
       {/* Animated background */}
@@ -184,27 +367,13 @@ const MusicDetailPage = () => {
         <div className="absolute inset-0 opacity-20">
           <motion.div
             className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(76,29,149,0.4),rgba(15,23,42,0))]"
-            animate={{
-              scale: [1, 1.2, 1],
-              opacity: [0.3, 0.5, 0.3],
-            }}
-            transition={{
-              duration: 8,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
+            animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
+            transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
           />
           <motion.div
             className="absolute inset-0 bg-[radial-gradient(circle_at_25%_25%,rgba(56,189,248,0.4),rgba(15,23,42,0))]"
-            animate={{
-              scale: [1.2, 1, 1.2],
-              opacity: [0.4, 0.6, 0.4],
-            }}
-            transition={{
-              duration: 10,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
+            animate={{ scale: [1.2, 1, 1.2], opacity: [0.4, 0.6, 0.4] }}
+            transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
           />
         </div>
       </div>
@@ -214,14 +383,14 @@ const MusicDetailPage = () => {
         {/* Hero Section */}
         <div className="flex flex-col md:flex-row items-start gap-12 mb-16">
           {/* Cover Image */}
-          <motion.div 
+          <motion.div
             className="w-64 h-64 rounded-2xl overflow-hidden shadow-2xl relative group"
             whileHover={{ scale: 1.02 }}
             transition={{ type: 'spring', stiffness: 300, damping: 20 }}
           >
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-            <img 
-              src={musicData?.coverImageUrl || "https://via.placeholder.com/256"} 
+            <img
+              src={musicData?.coverImageUrl || 'https://via.placeholder.com/256'}
               alt="Album cover"
               className="w-full h-full object-cover"
             />
@@ -229,7 +398,7 @@ const MusicDetailPage = () => {
 
           {/* Music Information */}
           <div className="flex-1 text-white">
-            <motion.h1 
+            <motion.h1
               className="text-6xl font-serif mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-200 to-purple-200"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -237,7 +406,7 @@ const MusicDetailPage = () => {
             >
               {musicData?.title || 'Loading...'}
             </motion.h1>
-            <motion.div 
+            <motion.div
               className="space-y-3"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -258,15 +427,13 @@ const MusicDetailPage = () => {
 
         {/* Cadenza Sections */}
         {musicData?.cadenzaTimeFrames && (
-          <motion.div 
+          <motion.div
             className="mb-16"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6 }}
           >
-            <h2 className="text-2xl font-serif mb-8 text-blue-200">
-              Interactive Cadenza Points
-            </h2>
+            <h2 className="text-2xl font-serif mb-8 text-blue-200">Interactive Cadenza Points</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {musicData.cadenzaTimeFrames.map((cadenza, index) => (
                 <motion.button
@@ -284,9 +451,7 @@ const MusicDetailPage = () => {
                   whileTap={{ scale: 0.98 }}
                 >
                   <div className="relative z-10">
-                    <span className="block font-serif text-lg mb-2 text-blue-200">
-                      Cadenza {index + 1}
-                    </span>
+                    <span className="block font-serif text-lg mb-2 text-blue-200">Cadenza {index + 1}</span>
                     <span className="block text-sm text-blue-300/60">
                       {cadenza.beginning} - {cadenza.ending}
                     </span>
@@ -298,93 +463,77 @@ const MusicDetailPage = () => {
           </motion.div>
         )}
 
-        {/* User Recordings Section */}
-        <motion.div 
-          className="mb-24" // Increased bottom margin to avoid overlap with control bar
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.8 }}
-        >
-          <h2 className="text-2xl font-serif mb-8 text-blue-200">
-            Your Recordings
-          </h2>
-          
-          <div className="relative rounded-xl backdrop-blur-sm bg-white/5 p-6 space-y-6">
-            {/* Recording Status */}
-            {isRecording && (
-              <motion.div 
-                className="flex items-center gap-4 p-4 rounded-lg bg-red-500/20 border border-red-500/30"
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-              >
-                <div className="flex items-center gap-2">
-                  <motion.div 
-                    className="w-3 h-3 rounded-full bg-red-500"
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ duration: 1, repeat: Infinity }}
-                  />
-                  <span className="text-red-200 font-medium">Recording in progress...</span>
-                </div>
-              </motion.div>
-            )}
-
-            {/* Latest Recording */}
-            {recordedAudio ? (
-              <div className="flex flex-col gap-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <motion.div 
-                      className="w-10 h-10 rounded-full bg-blue-500/30 flex items-center justify-center"
-                      whileHover={{ scale: 1.05 }}
-                    >
-                      <i className="fas fa-music text-blue-200" />
-                    </motion.div>
-                    <div>
-                      <h3 className="text-blue-200 font-medium">Latest Recording</h3>
-                      <p className="text-sm text-blue-300/60">
-                        {new Date().toLocaleDateString()}
-                      </p>
-                    </div>
+        {/* Rehearsal Points Section */}
+        {musicData?.rehearsalNumbers && (
+          <motion.div
+            className="mb-16"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+          >
+            <h2 className="text-2xl font-serif mb-8 text-blue-200">Rehearsal Points</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {musicData.rehearsalNumbers.map((point, index) => (
+                <motion.button
+                  key={index}
+                  onClick={() => handleRehearsalClick(point)}
+                  className={`
+                    relative overflow-hidden rounded-xl p-4 backdrop-blur-sm
+                    ${currentRehearsalPoint === point
+                      ? 'bg-green-500/30 ring-2 ring-green-400'
+                      : 'bg-white/5 hover:bg-white/10'
+                    }
+                    transition-all duration-300
+                  `}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <div className="relative z-10">
+                    <span className="block font-serif text-xl mb-1 text-green-200">{point.letter}</span>
+                    <span className="block text-sm text-green-300/60">{point.time}</span>
                   </div>
-                  <motion.button
-                    onClick={clearRecording}
-                    className="text-red-300 hover:text-red-200 transition-colors"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <i className="fas fa-trash" />
-                  </motion.button>
-                </div>
-                
-                <div className="relative rounded-lg overflow-hidden bg-white/10 p-3">
-                  <audio
-                    src={recordedAudio}
-                    controls
-                    className="w-full focus:outline-none"
-                  />
-                </div>
-              </div>
-            ) : (
-              <div className="text-center py-8 text-blue-300/60">
-                <p>No recordings yet</p>
-                <p className="text-sm mt-2">Your recordings will appear here after you complete a cadenza</p>
-              </div>
-            )}
-          </div>
-        </motion.div>
+                </motion.button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Recording Panel */}
+        <AnimatePresence>
+          {isRecordingMode && (
+            <RecordingPanel
+              isRecording={isRecording}
+              recordedAudio={recordedAudio}
+              currentTime={currentTime}
+              duration={duration}
+              onStartRecording={handleRecordingStart}
+              onStopRecording={handleRecordingStop}
+              onPlayRecording={playRecording}
+              onPauseRecording={pauseRecording}
+              isPlayingRecording={isPlayingRecording}
+              recordedSegments={recordedSegments}
+              rehearsalPoints={musicData?.rehearsalNumbers}
+              onRehearsalPointSelect={handleRehearsalClick}
+              currentRehearsalPoint={currentRehearsalPoint}
+              onClearRecording={clearRecording}
+              onRetakeComplete={handleRetakeComplete}
+              recordingPlaybackTime={recordingPlaybackTime}
+              seekRecordingPlayback={seekRecordingPlayback}
+              onDownloadRecording={handleDownloadRecording}
+            />
+          )}
+        </AnimatePresence>
 
         {/* Head Pose Control Section */}
         <div className="flex justify-center mb-12">
           <AnimatePresence>
             {isInCadenza && (
-              <HeadPoseControl 
-                onUnlock={handleUnlock} 
-                onPlay={handleCadenzaComplete} 
-                isPlaying={isPlaying} 
+              <HeadPoseControl
+                onUnlock={handleUnlock}
+                onPlay={handleCadenzaComplete}
+                isPlaying={isPlaying}
                 onHeadDetectionChange={handleHeadDetectionChange}
                 onClose={handleCloseHeadPose}
-                startRecording={startRecording}
-                stopRecording={stopRecording}
               />
             )}
           </AnimatePresence>
@@ -398,19 +547,24 @@ const MusicDetailPage = () => {
           onPause={handlePause}
           className="hidden"
         />
-        
-        {/* Audio Control Bar */}
-        <AudioControlBar 
-          audioRef={audioRef}
-          isPlaying={isPlaying}
-          onPlay={handlePlay}
-          onPause={handlePause}
-          currentTime={currentTime}
-          duration={duration}
-          musicData={musicData}
-          timeStringToSeconds={timeStringToSeconds}
-        />
       </div>
+
+      {/* Audio Control Bar */}
+      <AudioControlBar
+        audioRef={audioRef}
+        isPlaying={isRecordingMode ? isPlayingRecording : isPlaying}
+        onPlay={isRecordingMode ? playRecording : handlePlay}
+        onPause={isRecordingMode ? pauseRecording : handlePause}
+        currentTime={currentTime}
+        duration={duration}
+        musicData={musicData}
+        timeStringToSeconds={timeStringToSeconds}
+        isRecordingMode={isRecordingMode}
+        onToggleMode={handleToggleMode}
+        rehearsalPoints={musicData?.rehearsalNumbers}
+        onRehearsalPointClick={handleRehearsalClick}
+        currentRehearsalPoint={currentRehearsalPoint}
+      />
     </div>
   );
 };

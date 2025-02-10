@@ -21,12 +21,10 @@ const PROGRESS_RANGE = [-75, -15];
 const COLOR_RANGE = ["#ff008c", "#7700ff", "rgb(230, 255, 0)"];
 
 
-const HeadPoseControl = ({ onUnlock, onPlay, isPlaying, onHeadDetectionChange, onClose, startRecording, stopRecording }) => {
+const HeadPoseControl = ({ onUnlock, onPlay, isPlaying, onHeadDetectionChange, onClose }) => {
   const { videoRef, canvasRef, status, pitch } = useHeadPoseDetection();
   const [isUnlocked, setIsUnlocked] = React.useState(false);
   const [waitingForPlayGesture, setWaitingForPlayGesture] = React.useState(false);
-  const [isRecordingStarted, setIsRecordingStarted] = React.useState(false);
-  const [recordingStatus, setRecordingStatus] = React.useState('preparing'); // 'preparing' | 'recording' | 'completed'
 
   const y = useMotionValue(0);
   const ySpring = useSpring(y, { stiffness: 300, damping: 30 });
@@ -43,22 +41,6 @@ const HeadPoseControl = ({ onUnlock, onPlay, isPlaying, onHeadDetectionChange, o
     setIsUnlocked(false);
   }, []);
 
-  // Update recording effect
-  useEffect(() => {
-    if (!isRecordingStarted) {
-      const initializeRecording = async () => {
-        setRecordingStatus('preparing');
-        // Add a small delay to ensure everything is ready
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        startRecording();
-        setIsRecordingStarted(true);
-        setRecordingStatus('recording');
-      };
-      
-      initializeRecording();
-    }
-  }, [startRecording, isRecordingStarted]);
-
   // Update the play gesture handler
   useEffect(() => {
     if (pitch !== null) {
@@ -71,25 +53,10 @@ const HeadPoseControl = ({ onUnlock, onPlay, isPlaying, onHeadDetectionChange, o
       } 
       else if (pitch < PLAY_THRESHOLD && isUnlocked && waitingForPlayGesture) {
         setWaitingForPlayGesture(false);
-        setRecordingStatus('completed');
-
-        // Add a 500ms delay before stopping the recording
-        setTimeout(() => {
-          stopRecording();
-          onPlay();
-        }, 400);
+        onPlay();
       }
     }
-  }, [pitch, isUnlocked, waitingForPlayGesture, onUnlock, onPlay, stopRecording, y]);
-
-  // Handle component cleanup
-  useEffect(() => {
-    return () => {
-      if (isRecordingStarted) {
-        stopRecording();
-      }
-    };
-  }, [stopRecording, isRecordingStarted]);
+  }, [pitch, isUnlocked, waitingForPlayGesture, onUnlock, onPlay, y]);
 
   // Reset states when not in use
   useEffect(() => {
@@ -106,9 +73,6 @@ const HeadPoseControl = ({ onUnlock, onPlay, isPlaying, onHeadDetectionChange, o
 
   // Handle close
   const handleClose = () => {
-    if (isRecordingStarted) {
-      stopRecording();
-    }
     onClose();
   };
 
@@ -147,32 +111,7 @@ const HeadPoseControl = ({ onUnlock, onPlay, isPlaying, onHeadDetectionChange, o
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
           >
-            {recordingStatus === 'preparing' && (
-              <div className="flex items-center gap-2 text-yellow-500">
-                <motion.div
-                  className="w-2 h-2 rounded-full bg-yellow-500"
-                  animate={{ scale: [1, 1.2, 1] }}
-                  transition={{ duration: 1, repeat: Infinity }}
-                />
-                <span className="text-sm font-medium">Preparing recording...</span>
-              </div>
-            )}
-            {recordingStatus === 'recording' && (
-              <div className="flex items-center gap-2 text-red-500">
-                <motion.div
-                  className="w-2 h-2 rounded-full bg-red-500"
-                  animate={{ scale: [1, 1.2, 1] }}
-                  transition={{ duration: 1, repeat: Infinity }}
-                />
-                <span className="text-sm font-medium">Recording in progress</span>
-              </div>
-            )}
-            {recordingStatus === 'completed' && (
-              <div className="flex items-center gap-2 text-green-500">
-                <motion.div className="w-2 h-2 rounded-full bg-green-500" />
-                <span className="text-sm font-medium">Recording completed</span>
-              </div>
-            )}
+            {/* Recording status indicator content */}
           </motion.div>
 
           {/* Title Section */}
@@ -249,9 +188,6 @@ const HeadPoseControl = ({ onUnlock, onPlay, isPlaying, onHeadDetectionChange, o
              waitingForPlayGesture ? 'Nod to complete recording' : 
              'Processing...'}
           </div>
-          <div className="text-xs text-gray-500">
-            {recordingStatus === 'recording' && 'Your performance is being recorded'}
-          </div>
         </motion.div>
 
         {/* Hidden video elements */}
@@ -268,8 +204,6 @@ HeadPoseControl.propTypes = {
   isPlaying: PropTypes.bool.isRequired,
   onHeadDetectionChange: PropTypes.func.isRequired,
   onClose: PropTypes.func.isRequired,
-  startRecording: PropTypes.func.isRequired,
-  stopRecording: PropTypes.func.isRequired,
 };
 
 export default HeadPoseControl;
