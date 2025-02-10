@@ -22,7 +22,6 @@ const navigation = [
   // { name: 'Eye State Detection', href: '/EyeStateDetectionPage' },
   { name: 'Head Pose Detection', href: '/HeadPoseDetectionPage' },
   { name: 'Beat Detection', href: '/BeatDetectorPage' },
-  { name: 'Audio Player with CV', href: '/AudioPlayerWithCV' },
   // { name: 'Marketplace', href: '#' },
   // { name: 'Company', href: '#' },
 ]
