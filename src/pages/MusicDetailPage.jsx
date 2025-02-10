@@ -239,6 +239,17 @@ const MusicDetailPage = () => {
     mergeRecordings();
   }, [handleRecordingStop, mergeRecordings]);
 
+  const handleDownloadRecording = () => {
+    if (recordedAudio) {
+      const link = document.createElement('a');
+      link.href = recordedAudio;
+      link.download = `recording-${new Date().toISOString()}.wav`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
   // Effects
 
   // Load resources (music data, cover art, and audio) sequentially.
@@ -506,6 +517,9 @@ const MusicDetailPage = () => {
               currentRehearsalPoint={currentRehearsalPoint}
               onClearRecording={clearRecording}
               onRetakeComplete={handleRetakeComplete}
+              recordingPlaybackTime={recordingPlaybackTime}
+              seekRecordingPlayback={seekRecordingPlayback}
+              onDownloadRecording={handleDownloadRecording}
             />
           )}
         </AnimatePresence>
