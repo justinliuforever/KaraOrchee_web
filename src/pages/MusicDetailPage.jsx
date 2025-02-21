@@ -126,11 +126,11 @@ const MusicDetailPage = () => {
     if (audio && activeCadenza) {
       const endTime = timeStringToSeconds(activeCadenza.ending);
       if (isFinite(endTime)) {
-        // Add an offset to ensure we leave the cadenza interval.
+        // Add an offset to ensure we leave the cadenza interval
         audio.currentTime = endTime + 0.1;
         setActiveCadenza(null);
         setIsInCadenza(false);
-        handlePlay();
+        handlePlay(); // Resume playback after cadenza
       } else {
         console.error('Invalid time format:', activeCadenza.ending);
       }
@@ -139,10 +139,12 @@ const MusicDetailPage = () => {
 
   // Called when the head pose control is closed; stops the recording and resets cadenza state.
   const handleCloseHeadPose = useCallback(() => {
-    stopRecording();
+    if (isRecordingMode) {
+      stopRecording();
+    }
     setIsInCadenza(false);
     setActiveCadenza(null);
-  }, [stopRecording]);
+  }, [isRecordingMode, stopRecording]);
 
   // Toggle between normal mode and recording mode.
   const handleToggleMode = useCallback(() => {
@@ -196,16 +198,28 @@ const MusicDetailPage = () => {
     (seekTime) => {
       const audio = audioRef.current;
       if (audio) {
-        audio.currentTime = seekTime;
-      }
-      if (isRecording) {
-        updateRecordingProgress(seekTime);
-      }
-      if (isRecordingMode && recordedAudio) {
-        seekRecordingPlayback(seekTime);
+        try {
+          audio.currentTime = seekTime;
+          if (isRecording) {
+            updateRecordingProgress(seekTime);
+          }
+          if (isRecordingMode && recordedAudio) {
+            seekRecordingPlayback(seekTime);
+          }
+        } catch (error) {
+          console.error('Seek error:', error);
+
+          audio.load();
+          setTimeout(() => {
+            audio.currentTime = seekTime;
+            if (!isPlaying) {
+              audio.pause();
+            }
+          }, 100);
+        }
       }
     },
-    [isRecording, isRecordingMode, recordedAudio, updateRecordingProgress, seekRecordingPlayback]
+    [isRecording, isRecordingMode, recordedAudio, updateRecordingProgress, seekRecordingPlayback, isPlaying]
   );
 
   // Handle rehearsal point click.
@@ -275,19 +289,32 @@ const MusicDetailPage = () => {
         // Step 3: Preload audio
         setLoading((prev) => ({ ...prev, status: 'Loading audio...', progress: 60 }));
         if (data.soundTracks?.[0]?.wav) {
-          const audio = new Audio(data.soundTracks[0].wav);
-          await new Promise((resolve, reject) => {
-            audio.addEventListener(
-              'loadeddata',
-              () => {
+          const audio = audioRef.current;
+          if (audio) {
+            audio.preload = 'auto';
+            audio.crossOrigin = 'anonymous';
+            
+            await new Promise((resolve, reject) => {
+              const handleCanPlay = () => {
+                audio.removeEventListener('canplay', handleCanPlay);
+                audio.removeEventListener('error', handleError);
                 setLoading((prev) => ({ ...prev, progress: 90 }));
                 resolve();
-              },
-              { once: true }
-            );
-            audio.addEventListener('error', reject, { once: true });
-            audio.load();
-          });
+              };
+
+              const handleError = (error) => {
+                audio.removeEventListener('canplay', handleCanPlay);
+                audio.removeEventListener('error', handleError);
+                reject(error);
+              };
+
+              audio.addEventListener('canplay', handleCanPlay);
+              audio.addEventListener('error', handleError);
+              
+              audio.src = data.soundTracks[0].wav;
+              audio.load();
+            });
+          }
         }
 
         // Step 4: Initialize audio element
@@ -298,7 +325,11 @@ const MusicDetailPage = () => {
         setLoading((prev) => ({ ...prev, isLoading: false }));
       } catch (error) {
         console.error('Error loading resources:', error);
-        setLoading((prev) => ({ ...prev, status: 'Error loading resources. Please try again.' }));
+        setLoading((prev) => ({ 
+          ...prev, 
+          status: 'Error loading resources. Please try again.',
+          isLoading: false 
+        }));
       }
     };
 
@@ -329,7 +360,7 @@ const MusicDetailPage = () => {
     };
   }, [loading.isLoading, isRecording, updateRecordingProgress]);
 
-  // Track the current cadenza; if in recording mode and within a cadenza interval, pause the backtrack playback.
+  // Track the current cadenza; pause playback when entering a cadenza interval
   useEffect(() => {
     if (!loading.isLoading && musicData?.cadenzaTimeFrames) {
       const currentCadenza = musicData.cadenzaTimeFrames.find((cadenza) => {
@@ -337,15 +368,18 @@ const MusicDetailPage = () => {
         const end = timeStringToSeconds(cadenza.ending);
         return currentTime >= start && currentTime < end;
       });
+
+      // Update cadenza states
       setIsInCadenza(!!currentCadenza);
       setActiveCadenza(currentCadenza || null);
 
+      // Pause playback when entering a cadenza
       const audio = audioRef.current;
-      if (currentCadenza && isRecordingMode && audio && !audio.paused) {
+      if (currentCadenza && audio && !audio.paused) {
         handlePause();
       }
     }
-  }, [currentTime, musicData, loading.isLoading, isRecordingMode, handlePause, timeStringToSeconds]);
+  }, [currentTime, musicData, loading.isLoading, handlePause, timeStringToSeconds]);
 
   // Cleanup on unmount: reset the current rehearsal point.
   useEffect(() => {
