@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import AudioControlBar from '../components/MusicDetailComponent/AudioControlBar';
 import HeadPoseControl from '../components/MusicDetailComponent/HeadPoseControl';
@@ -26,7 +26,6 @@ const MusicDetailPage = () => {
   const [duration, setDuration] = useState(0);
 
   // Other local states
-  const [isHeadDetected, setIsHeadDetected] = useState(false);
   const [musicData, setMusicData] = useState(null);
   const [activeCadenza, setActiveCadenza] = useState(null);
   const [isInCadenza, setIsInCadenza] = useState(false);
@@ -39,16 +38,14 @@ const MusicDetailPage = () => {
     isRecording,
     recordedAudio,
     recordedSegments,
-    recordingProgress,
     isPlayingRecording,
     recordingPlaybackTime,
-    recordingPlayerRef,
     startRecording,
     stopRecording,
     clearRecording,
-    seekRecordingPlayback,
     playRecording,
     pauseRecording,
+    seekRecordingPlayback,
     updateRecordingProgress,
     startRetake,
     mergeRecordings,
@@ -94,9 +91,9 @@ const MusicDetailPage = () => {
     console.log('Cadenza unlocked, waiting for play gesture');
   }, []);
 
-  // Update head detection status
-  const handleHeadDetectionChange = useCallback((detected) => {
-    setIsHeadDetected(detected);
+  // Update head detection status - simplified since we don't need to track the state
+  const handleHeadDetectionChange = useCallback(() => {
+    // Empty callback - we might want to add functionality here in the future
   }, []);
 
   // Jump to cadenza start time and pause backtrack playback
@@ -179,19 +176,6 @@ const MusicDetailPage = () => {
     stopRecording();
     handlePause();
   }, [isRecordingMode, stopRecording, handlePause]);
-
-  // In recording mode, toggle play/pause for the recording playback.
-  const handlePlayInRecordingMode = useCallback(() => {
-    if (recordedAudio) {
-      if (isPlayingRecording) {
-        pauseRecording();
-      } else {
-        playRecording();
-      }
-    } else {
-      handleRecordingStart();
-    }
-  }, [recordedAudio, isPlayingRecording, pauseRecording, playRecording, handleRecordingStart]);
 
   // Seek to a specific time in the backtrack (and update recording progress if necessary).
   const handleSeek = useCallback(
@@ -598,6 +582,7 @@ const MusicDetailPage = () => {
         rehearsalPoints={musicData?.rehearsalNumbers}
         onRehearsalPointClick={handleRehearsalClick}
         currentRehearsalPoint={currentRehearsalPoint}
+        onSeek={handleSeek}
       />
     </div>
   );
