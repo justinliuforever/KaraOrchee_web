@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import { motion } from 'framer-motion';
 
 const SearchBar = ({ onSearch }) => {
@@ -44,6 +45,10 @@ const SearchBar = ({ onSearch }) => {
       </div>
     </div>
   );
+};
+
+SearchBar.propTypes = {
+  onSearch: PropTypes.func.isRequired
 };
 
 export default SearchBar;

@@ -6,7 +6,6 @@ const MusicCard = ({
   imageUrl, 
   title, 
   composerLastName,
-  composerFullName, 
   opus, 
   musicalKey, 
   duration,
@@ -62,13 +61,13 @@ const MusicCard = ({
           {/* Tags Row */}
           <div className="flex flex-wrap gap-2">
             {opus && (
-              <span className="px-3 py-1 text-sm rounded-full bg-white/10 text-white 
+              <span key={`opus-${id}`} className="px-3 py-1 text-sm rounded-full bg-white/10 text-white 
                              backdrop-blur-sm border border-white/20">
                 {opus}
               </span>
             )}
             {musicalKey && (
-              <span className="px-3 py-1 text-sm rounded-full bg-blue-500/20 text-blue-100 
+              <span key={`key-${id}`} className="px-3 py-1 text-sm rounded-full bg-blue-500/20 text-blue-100 
                              backdrop-blur-sm border border-blue-500/30">
                 {musicalKey}
               </span>
@@ -78,7 +77,7 @@ const MusicCard = ({
           {/* Info Grid */}
           <div className="grid grid-cols-2 gap-3 text-sm text-gray-300">
             {instrumentOrVoiceType && (
-              <div className="flex items-center space-x-2">
+              <div key={`instrument-${id}`} className="flex items-center space-x-2">
                 <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
                         d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
@@ -87,7 +86,7 @@ const MusicCard = ({
               </div>
             )}
             {movementNumber && (
-              <div className="flex items-center space-x-2">
+              <div key={`movement-${id}`} className="flex items-center space-x-2">
                 <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
                         d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -96,7 +95,7 @@ const MusicCard = ({
               </div>
             )}
             {duration && (
-              <div className="flex items-center space-x-2">
+              <div key={`duration-${id}`} className="flex items-center space-x-2">
                 <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
                         d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -115,7 +114,6 @@ MusicCard.propTypes = {
   imageUrl: PropTypes.string,
   title: PropTypes.string.isRequired,
   composerLastName: PropTypes.string.isRequired,
-  composerFullName: PropTypes.string.isRequired,
   opus: PropTypes.string,
   musicalKey: PropTypes.string,
   duration: PropTypes.string,
